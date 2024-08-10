@@ -6,3 +6,4 @@ toolchains/*
 !toolchains/README.md
 software/random_res
 sims/verilator/run_prog/single.log
+.sv_cache
