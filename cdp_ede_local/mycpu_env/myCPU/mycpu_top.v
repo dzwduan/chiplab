@@ -257,9 +257,9 @@ alu u_alu(
 
 assign data_sram_we    = mem_we && valid;
 assign data_sram_addr  = alu_result;
-assign data_sram_wdata = rkd_value & {32{valid}};
+assign data_sram_wdata = rkd_value ;
 
-assign mem_result   = data_sram_rdata & {32{valid}};
+assign mem_result   = data_sram_rdata ;
 assign final_result = res_from_mem ? mem_result : alu_result;
 
 assign rf_we    = gr_we && valid;
