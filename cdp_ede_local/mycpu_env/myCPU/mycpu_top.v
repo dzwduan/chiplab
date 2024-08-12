@@ -250,7 +250,7 @@ assign alu_src2 = src2_is_imm ? imm : rkd_value;
 
 alu u_alu(
     .alu_op     (alu_op    ),
-    .alu_src1   (alu_src2  ),
+    .alu_src1   (alu_src1  ),
     .alu_src2   (alu_src2  ),
     .alu_result (alu_result)
     );
