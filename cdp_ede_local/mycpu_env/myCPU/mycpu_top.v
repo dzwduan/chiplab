@@ -192,7 +192,6 @@ assign src2_is_4  =  inst_jirl | inst_bl;
 
 assign imm = src2_is_4 ? 32'h4                      :
              need_si20 ? {i20[19:0], 12'b0}         :
-             need_ui5  ? rk                         :
 /*need_ui5 || need_si12*/{{20{i12[11]}}, i12[11:0]} ;
 
 assign br_offs = need_si26 ? {{ 4{i26[25]}}, i26[25:0], 2'b0} :
