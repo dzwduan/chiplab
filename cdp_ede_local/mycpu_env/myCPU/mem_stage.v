@@ -1,5 +1,5 @@
 `include "mycpu.vh"
-
+`default_nettype none
 module mem_stage (
     input                          clk,
     input                          reset,

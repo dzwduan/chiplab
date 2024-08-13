@@ -1,3 +1,4 @@
+`default_nettype none
 module regfile(
     input  wire        clk,
     // READ PORT 1
