@@ -17,13 +17,16 @@ module wb_stage(
     output [31:0] debug_wb_pc                      ,
     output [ 3:0] debug_wb_rf_wen                  ,
     output [ 4:0] debug_wb_rf_wnum                 ,
-    output [31:0] debug_wb_rf_wdata                                  
+    output [31:0] debug_wb_rf_wdata
 );
 
-
+wire [31:0] ws_pc;
+wire [ 3:0] rf_we;
+wire [ 4:0] dest;
+wire [31:0] final_result;
 
 // debug info generate
-assign debug_wb_pc       = pc;
+assign debug_wb_pc       = ws_pc;
 assign debug_wb_rf_we   = {4{rf_we}};
 assign debug_wb_rf_wnum  = dest;
 assign debug_wb_rf_wdata = final_result;
