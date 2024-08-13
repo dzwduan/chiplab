@@ -8,8 +8,6 @@ software/random_res
 sims/verilator/run_prog/single.log
 .sv_cache
 
-cdp_ede_local/mycpu_env/gettrace/gettrace.hw
-cdp_ede_local/mycpu_env/gettrace/gettrace.ip_user_files
-cdp_ede_local/mycpu_env/gettrace/gettrace.cache
-cdp_ede_local/mycpu_env/gettrace/gettrace.sim
-cdp_ede_local/mycpu_env/soc_verify/soc_dram
+
+cdp_ede_local/mycpu_env/soc_verify/
+cdp_ede_local/mycpu_env/gettrace/
