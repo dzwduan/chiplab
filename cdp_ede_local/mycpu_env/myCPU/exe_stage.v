@@ -12,19 +12,16 @@ module exe_stage (
     //to ms
     output                         es_to_ms_valid,
     output [`ES_TO_MS_BUS_WD -1:0] es_to_ms_bus,
-
     // to data sram
-    // output                          data_sram_en,
-    // output [3:0]                    data_sram_we,
-    output        data_sram_we,
-    output [31:0] data_sram_addr,
-    output [31:0] data_sram_wdata
+    output                         data_sram_en,
+    output [                  3:0] data_sram_we,
+    output [                 31:0] data_sram_addr,
+    output [                 31:0] data_sram_wdata
 );
 
 
   reg                          es_valid;
   reg  [`DS_TO_ES_BUS_WD -1:0] ds_to_es_bus_r;
-  wire [`ES_TO_MS_BUS_WD -1:0] es_to_ms_bus;
   wire                         es_ready_go;
   wire [                 11:0] es_alu_op;
   wire                         es_src1_is_pc;
@@ -39,6 +36,7 @@ module exe_stage (
   wire [                 31:0] es_rj_value;
   wire [                 31:0] es_rkd_value;
   wire                         es_mem_we;
+  wire [                 31:0] es_exe_result;
 
   assign {es_alu_op,  //152:139
       es_load_op,  //138:138
@@ -56,12 +54,12 @@ module exe_stage (
 
 
   assign es_to_ms_bus = {
-      es_store_op,  //71:71
-      es_load_op,   //70:70
-      es_gr_we,     //69:69
-      es_dest,      //68:64
-      exe_result,   //63:32
-      es_pc         //31:0
+    es_store_op,  //71:71
+    es_load_op,  //70:70
+    es_gr_we,  //69:69
+    es_dest,  //68:64
+    es_exe_result,  //63:32
+    es_pc  //31:0
   };
 
 
@@ -89,7 +87,7 @@ module exe_stage (
       .alu_result(es_alu_result)
   );
 
-  assign data_sram_we    = es_mem_we && es_valid;
+  assign data_sram_we    = {4{es_mem_we && es_valid}}; //TODO: add sb sh sw sd
   assign data_sram_addr  = es_alu_result;
   assign data_sram_wdata = es_rkd_value ;
 

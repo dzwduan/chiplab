@@ -12,5 +12,6 @@ sims/verilator/run_prog/single.log
 cdp_ede_local/mycpu_env/soc_verify/
 cdp_ede_local/mycpu_env/gettrace/
 open-la500
-vivado.jou
-vivado.log
+vivado*
+# cdp_ede_local/mycpu_env/func
+cdp_ede_local/mycpu_env/func/obj
