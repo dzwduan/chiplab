@@ -97,19 +97,27 @@ module id_stage (
   wire [31:0] alu_src2;
   wire [31:0] alu_result;
 
-  assign op_31_26 = inst[31:26];
-  assign op_25_22 = inst[25:22];
-  assign op_21_20 = inst[21:20];
-  assign op_19_15 = inst[19:15];
 
-  assign rd       = inst[4:0];
-  assign rj       = inst[9:5];
-  assign rk       = inst[14:10];
 
-  assign i12      = inst[21:10];
-  assign i20      = inst[24:5];
-  assign i16      = inst[25:10];
-  assign i26      = {inst[9:0], inst[25:10]};
+  wire        ds_ready_go;
+
+  assign ds_ready_go = 1'b1;
+
+
+
+  assign op_31_26    = inst[31:26];
+  assign op_25_22    = inst[25:22];
+  assign op_21_20    = inst[21:20];
+  assign op_19_15    = inst[19:15];
+
+  assign rd          = inst[4:0];
+  assign rj          = inst[9:5];
+  assign rk          = inst[14:10];
+
+  assign i12         = inst[21:10];
+  assign i20         = inst[24:5];
+  assign i16         = inst[25:10];
+  assign i26         = {inst[9:0], inst[25:10]};
 
   decoder_6_64 u_dec0 (
       .in (op_31_26),
@@ -232,9 +240,9 @@ module id_stage (
       .alu_result(alu_result)
   );
 
-assign rf_we    = gr_we && valid;
-assign rf_waddr = dest;
-assign rf_wdata = final_result;
+  assign rf_we    = gr_we && valid;
+  assign rf_waddr = dest;
+  assign rf_wdata = final_result;
 
 
 endmodule

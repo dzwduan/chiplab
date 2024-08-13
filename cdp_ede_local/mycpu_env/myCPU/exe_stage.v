@@ -16,15 +16,17 @@ module exe_stage (
     // to data sram
     // output                          data_sram_en,
     // output [3:0]                    data_sram_we,
-    output                          data_sram_we,
-    output [31:0]                   data_sram_addr,
-    output [31:0]                   data_sram_wdata
+    output        data_sram_we,
+    output [31:0] data_sram_addr,
+    output [31:0] data_sram_wdata
 );
 
+  wire es_ready_go;
 
+  assign es_ready_go = 1'b1;
 
-assign data_sram_we    = mem_we && valid;
-assign data_sram_addr  = alu_result;
-assign data_sram_wdata = rkd_value ;
+  assign data_sram_we    = mem_we && valid;
+  assign data_sram_addr  = alu_result;
+  assign data_sram_wdata = rkd_value ;
 
 endmodule
