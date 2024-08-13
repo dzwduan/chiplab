@@ -22,4 +22,10 @@ module wb_stage(
 
 
 
+// debug info generate
+assign debug_wb_pc       = pc;
+assign debug_wb_rf_we   = {4{rf_we}};
+assign debug_wb_rf_wnum  = dest;
+assign debug_wb_rf_wdata = final_result;
+
 endmodule

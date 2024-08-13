@@ -16,6 +16,16 @@ module mem_stage(
     input  [31:0]                      data_sram_rdata
 );
 
+wire [31:0] mem_result;
+wire [31:0] final_result;
 
+
+
+
+
+
+
+assign mem_result   = data_sram_rdata ;
+assign final_result = res_from_mem ? mem_result : alu_result;
 
 endmodule

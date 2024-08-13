@@ -22,4 +22,9 @@ module exe_stage (
 );
 
 
+
+assign data_sram_we    = mem_we && valid;
+assign data_sram_addr  = alu_result;
+assign data_sram_wdata = rkd_value ;
+
 endmodule
