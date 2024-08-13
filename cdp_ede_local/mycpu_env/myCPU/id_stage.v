@@ -6,7 +6,7 @@ module id_stage (
     //allowin
     input                          es_allowin,
     output                         ds_allowin,
-    //from fs
+    //from fsF
     input                          fs_to_ds_valid,
     input  [`FS_TO_DS_BUS_WD -1:0] fs_to_ds_bus,
 
@@ -105,7 +105,7 @@ module id_stage (
 
   assign ds_ready_go = 1'b1;
   assign ds_allowin = !ds_valid || es_allowin && ds_ready_go;
-  assign ds_to_es_ds_valid = ds_valid && ds_ready_go;
+  assign ds_to_es_valid = ds_valid && ds_ready_go;
 
   always @(posedge clk) begin
     if (reset) begin
@@ -230,6 +230,13 @@ module id_stage (
 
   assign rf_raddr1 = rj;
   assign rf_raddr2 = src_reg_is_rd ? rd : rk;
+
+  assign {
+        rf_we   ,  //37:37
+        rf_waddr,  //36:32
+        rf_wdata   //31:0
+  } = ws_to_rf_bus;
+
   regfile u_regfile (
       .clk   (clk),
       .raddr1(rf_raddr1),
@@ -253,13 +260,6 @@ module id_stage (
                   ) && ds_valid;
   assign br_target = (inst_beq || inst_bne || inst_bl || inst_b) ? (ds_pc + br_offs) :
       /*inst_jirl*/ (rj_value + jirl_offs);
-
-  assign alu_src1 = src1_is_pc ? ds_pc[31:0] : rj_value;
-  assign alu_src2 = src2_is_imm ? ds_imm : rkd_value;
-
-  assign rf_we = gr_we && ds_valid;
-  assign rf_waddr = dest;
-  assign rf_wdata = alu_result;
 
   assign br_bus = {br_taken, br_target};
 

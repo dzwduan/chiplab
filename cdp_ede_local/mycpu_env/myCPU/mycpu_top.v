@@ -1,5 +1,5 @@
 `include "mycpu.vh"
-
+`default_nettype none
 module mycpu_top (
     input  wire         clk,
     input  wire         resetn,
@@ -129,7 +129,7 @@ wb_stage u_wb_stage(
     .ws_to_ds_valid                     (ws_to_ds_valid            ),
     //trace debug interface
     .debug_wb_pc                        (debug_wb_pc               ),
-    .debug_wb_rf_wen                    (debug_wb_rf_wen           ),
+    .debug_wb_rf_we                    (debug_wb_rf_we          ),
     .debug_wb_rf_wnum                   (debug_wb_rf_wnum          ),
     .debug_wb_rf_wdata                  (debug_wb_rf_wdata         )
 );

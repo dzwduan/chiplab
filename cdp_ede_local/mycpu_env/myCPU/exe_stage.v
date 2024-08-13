@@ -36,7 +36,9 @@ module exe_stage (
   wire [                 31:0] es_rj_value;
   wire [                 31:0] es_rkd_value;
   wire                         es_mem_we;
-  wire [                 31:0] es_exe_result;
+  wire [                 31:0] es_alu_result;
+  wire [                 31:0] es_alu_src1;
+  wire [                 31:0] es_alu_src2;
 
   assign {es_alu_op,  //152:139
       es_load_op,  //138:138
@@ -46,10 +48,10 @@ module exe_stage (
       es_gr_we,  //134:134
       es_store_op,  //133:133
       es_dest,  //132:128
-      es_ds_imm,  //127:96
+      es_imm,  //127:96
       es_rj_value,  //95 :64
       es_rkd_value,  //63 :32
-      es_ds_pc  //31 :0
+      es_pc  //31 :0
       } = ds_to_es_bus_r;
 
 
@@ -58,7 +60,7 @@ module exe_stage (
     es_load_op,  //70:70
     es_gr_we,  //69:69
     es_dest,  //68:64
-    es_exe_result,  //63:32
+    es_alu_result,  //63:32
     es_pc  //31:0
   };
 

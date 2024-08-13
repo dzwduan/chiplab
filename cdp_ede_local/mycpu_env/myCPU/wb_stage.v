@@ -12,12 +12,11 @@ module wb_stage (
     output [`WS_TO_RF_BUS_WD -1:0] ws_to_rf_bus,
     //to ds
     output                         ws_to_ds_valid,
-
     //trace debug interface
-    output [31:0] debug_wb_pc,
-    output [ 3:0] debug_wb_rf_wen,
-    output [ 4:0] debug_wb_rf_wnum,
-    output [31:0] debug_wb_rf_wdata
+    output [                 31:0] debug_wb_pc,
+    output [                  3:0] debug_wb_rf_we,
+    output [                  4:0] debug_wb_rf_wnum,
+    output [                 31:0] debug_wb_rf_wdata
 );
 
   reg                         ws_valid;
@@ -45,17 +44,18 @@ module wb_stage (
   end
 
 
-  assign {
-      ws_gr_we,         //69:69
-      ws_dest,          //68:64
+  assign {ws_gr_we,  //69:69
+      ws_dest,  //68:64
       ws_final_result,  //63:32
-      ws_pc             //31:0
+      ws_pc  //31:0
       } = ms_to_ws_bus_r;
 
+  assign ws_to_rf_bus = {ws_gr_we, ws_dest, ws_final_result};
+
   // debug info generate
-  assign debug_wb_pc        = ws_pc;
-  assign debug_wb_rf_we     = {4{ws_gr_we}};
-  assign debug_wb_rf_wnum   = ws_dest;
-  assign debug_wb_rf_wdata  = ws_final_result;
+  assign debug_wb_pc = ws_pc;
+  assign debug_wb_rf_we = {4{ws_gr_we}};
+  assign debug_wb_rf_wnum = ws_dest;
+  assign debug_wb_rf_wdata = ws_final_result;
 
 endmodule
