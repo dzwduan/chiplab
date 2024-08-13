@@ -11,3 +11,4 @@ sims/verilator/run_prog/single.log
 
 cdp_ede_local/mycpu_env/soc_verify/
 cdp_ede_local/mycpu_env/gettrace/
+open-la500
