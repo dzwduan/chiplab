@@ -1,22 +1,22 @@
 `include "mycpu.vh"
 `default_nettype none
 module exe_stage (
-    input                          clk,
-    input                          reset,
+    input  wire                         clk,
+    input  wire                         reset,
     //allowin
-    input                          ms_allowin,
-    output                         es_allowin,
+    input  wire                         ms_allowin,
+    output wire                         es_allowin,
     //from ds
-    input                          ds_to_es_valid,
-    input  [`DS_TO_ES_BUS_WD -1:0] ds_to_es_bus,
+    input  wire                         ds_to_es_valid,
+    input  wire [`DS_TO_ES_BUS_WD -1:0] ds_to_es_bus,
     //to ms
-    output                         es_to_ms_valid,
-    output [`ES_TO_MS_BUS_WD -1:0] es_to_ms_bus,
+    output wire                         es_to_ms_valid,
+    output wire [`ES_TO_MS_BUS_WD -1:0] es_to_ms_bus,
     // to data sram
-    output                         data_sram_en,
-    output [                  3:0] data_sram_we,
-    output [                 31:0] data_sram_addr,
-    output [                 31:0] data_sram_wdata
+    output wire                         data_sram_en,
+    output wire [                  3:0] data_sram_we,
+    output wire [                 31:0] data_sram_addr,
+    output wire [                 31:0] data_sram_wdata
 );
 
 
@@ -40,8 +40,7 @@ module exe_stage (
   wire [                 31:0] es_alu_src1;
   wire [                 31:0] es_alu_src2;
 
-  assign {
-      es_alu_op,  //152:139
+  assign {es_alu_op,  //152:139
       es_load_op,  //138:138
       es_src1_is_pc,  //137:137
       es_src2_is_imm,  //136:136
@@ -67,7 +66,7 @@ module exe_stage (
 
 
   assign es_ready_go = 1'b1;
-  assign es_allowin = !es_valid || es_ready_go && ms_allowin;
+  assign es_allowin = !es_valid || (es_ready_go && ms_allowin);
   assign es_to_ms_valid = es_valid && es_ready_go;
 
   always @(posedge clk) begin
