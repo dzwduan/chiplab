@@ -53,9 +53,9 @@ module if_stage (
     if (reset) begin
       fs_valid <= 1'b0;
     end else if (fs_allowin) begin
-      fs_valid <= to_fs_valid && !br_taken;
-    end else if (br_taken) begin
-      fs_valid <= 1'b0;
+      fs_valid <= to_fs_valid ;
+    // end else if (br_taken) begin
+    //   fs_valid <= 1'b0;
     end
   end
 

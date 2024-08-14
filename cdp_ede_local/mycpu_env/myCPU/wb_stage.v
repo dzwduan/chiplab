@@ -53,9 +53,9 @@ module wb_stage (
   assign ws_to_rf_bus = {ws_gr_we, ws_dest, ws_final_result};
 
   // debug info generate
-  assign debug_wb_pc = ws_pc;
+  assign debug_wb_pc = ws_pc & {32{ws_valid}};
   assign debug_wb_rf_we = {4{ws_gr_we}};
-  assign debug_wb_rf_wnum = ws_dest;
-  assign debug_wb_rf_wdata = ws_final_result;
+  assign debug_wb_rf_wnum = ws_dest & {5{ws_valid}};
+  assign debug_wb_rf_wdata = ws_final_result & {32{ws_valid}};
 
 endmodule
