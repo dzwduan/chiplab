@@ -1,20 +1,20 @@
 `include "mycpu.vh"
 `default_nettype none
 module if_stage (
-    input                         clk,
-    input                         reset,
+    input  wire                        clk,
+    input  wire                        reset,
     //if <> id
-    input                         ds_allowin,
-    output                        fs_to_ds_valid,
-    output [`FS_TO_DS_BUS_WD-1:0] fs_to_ds_bus,
+    input  wire                        ds_allowin,
+    output wire                        fs_to_ds_valid,
+    output wire [`FS_TO_DS_BUS_WD-1:0] fs_to_ds_bus,
     // brbus
-    input  [      `BR_BUS_WD-1:0] br_bus,
+    input  wire [      `BR_BUS_WD-1:0] br_bus,
     // inst sram interface
-    output                        inst_sram_en,
-    output [                 3:0] inst_sram_we,
-    output [                31:0] inst_sram_addr,
-    output [                31:0] inst_sram_wdata,
-    input  [                31:0] inst_sram_rdata
+    output wire                        inst_sram_en,
+    output wire [                 3:0] inst_sram_we,
+    output wire [                31:0] inst_sram_addr,
+    output wire [                31:0] inst_sram_wdata,
+    input  wire [                31:0] inst_sram_rdata
 );
 
   reg         fs_valid;

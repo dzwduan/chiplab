@@ -1,22 +1,22 @@
 `include "mycpu.vh"
 `default_nettype none
 module id_stage (
-    input                          clk,
-    input                          reset,
+    input  wire                         clk,
+    input  wire                         reset,
     //allowin
-    input                          es_allowin,
-    output                         ds_allowin,
+    input  wire                         es_allowin,
+    output wire                         ds_allowin,
     //from fsF
-    input                          fs_to_ds_valid,
-    input  [`FS_TO_DS_BUS_WD -1:0] fs_to_ds_bus,
+    input  wire                         fs_to_ds_valid,
+    input  wire [`FS_TO_DS_BUS_WD -1:0] fs_to_ds_bus,
 
     //to es
-    output                         ds_to_es_valid,
-    output [`DS_TO_ES_BUS_WD -1:0] ds_to_es_bus,
+    output wire                         ds_to_es_valid,
+    output wire [`DS_TO_ES_BUS_WD -1:0] ds_to_es_bus,
     //to fs
-    output [`BR_BUS_WD       -1:0] br_bus,
+    output wire [`BR_BUS_WD       -1:0] br_bus,
     //to rf: for write back
-    input  [`WS_TO_RF_BUS_WD -1:0] ws_to_rf_bus
+    input  wire [`WS_TO_RF_BUS_WD -1:0] ws_to_rf_bus
 );
 
   wire                        br_taken;
@@ -116,14 +116,11 @@ module id_stage (
     end
 
     if (fs_to_ds_valid && ds_allowin) begin
-        fs_to_ds_bus_r <= fs_to_ds_bus;
+      fs_to_ds_bus_r <= fs_to_ds_bus;
     end
   end
 
-  assign {
-    ds_pc,
-    ds_inst
-  } = fs_to_ds_bus_r;
+  assign {ds_pc, ds_inst} = fs_to_ds_bus_r;
 
 
   assign op_31_26 = ds_inst[31:26];
@@ -140,22 +137,22 @@ module id_stage (
   assign i16 = ds_inst[25:10];
   assign i26 = {ds_inst[9:0], ds_inst[25:10]};
 
-    decoder_6_64 u_dec0 (
-        .in (op_31_26),
-        .out(op_31_26_d)
-    );
-    decoder_4_16 u_dec1 (
-        .in (op_25_22),
-        .out(op_25_22_d)
-    );
-    decoder_2_4 u_dec2 (
-        .in (op_21_20),
-        .out(op_21_20_d)
-    );
-    decoder_5_32 u_dec3 (
-        .in (op_19_15),
-        .out(op_19_15_d)
-    );
+  decoder_6_64 u_dec0 (
+      .in (op_31_26),
+      .out(op_31_26_d)
+  );
+  decoder_4_16 u_dec1 (
+      .in (op_25_22),
+      .out(op_25_22_d)
+  );
+  decoder_2_4 u_dec2 (
+      .in (op_21_20),
+      .out(op_21_20_d)
+  );
+  decoder_5_32 u_dec3 (
+      .in (op_19_15),
+      .out(op_19_15_d)
+  );
 
   assign inst_add_w = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h1] & op_19_15_d[5'h00];
   assign inst_sub_w = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h1] & op_19_15_d[5'h02];
@@ -232,11 +229,10 @@ module id_stage (
   assign rf_raddr1 = rj;
   assign rf_raddr2 = src_reg_is_rd ? rd : rk;
 
-  assign {
-        rf_we   ,  //37:37
-        rf_waddr,  //36:32
-        rf_wdata   //31:0
-  } = ws_to_rf_bus;
+  assign {rf_we,  //37:37
+      rf_waddr,  //36:32
+      rf_wdata  //31:0
+      } = ws_to_rf_bus;
 
   regfile u_regfile (
       .clk   (clk),
@@ -266,18 +262,18 @@ module id_stage (
 
   assign ds_to_es_bus = {
     // ds_inst,        //184:153
-    alu_op,         //152:139
-    load_op,        //138:138
-    src1_is_pc,     //137:137
-    src2_is_imm,    //136:136
-    src2_is_4,      //135:135
-    gr_we,          //134:134
-    store_op,       //133:133
-    dest,           //132:128
-    ds_imm,         //127:96
-    rj_value,       //95 :64
-    rkd_value,      //63 :32
-    ds_pc           //31 :0
+    alu_op,  //152:139
+    load_op,  //138:138
+    src1_is_pc,  //137:137
+    src2_is_imm,  //136:136
+    src2_is_4,  //135:135
+    gr_we,  //134:134
+    store_op,  //133:133
+    dest,  //132:128
+    ds_imm,  //127:96
+    rj_value,  //95 :64
+    rkd_value,  //63 :32
+    ds_pc  //31 :0
   };
 
 
