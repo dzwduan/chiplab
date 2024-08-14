@@ -31,13 +31,13 @@ module id_stage (
   wire                        gr_we;
   wire                        mem_we;
   wire                        src_reg_is_rd;
+  wire                        rj_eq_rd;
   wire [                 4:0] dest;
   wire [                31:0] rj_value;
   wire [                31:0] rkd_value;
   wire [                31:0] ds_imm;
   wire [                31:0] br_offs;
   wire [                31:0] jirl_offs;
-
   wire [                 5:0] op_31_26;
   wire [                 3:0] op_25_22;
   wire [                 1:0] op_21_20;
@@ -101,6 +101,7 @@ module id_stage (
   wire [                31:0] ds_pc;
   wire [                31:0] ds_inst;
   wire                        ds_ready_go;
+
 
 
   assign ds_ready_go = 1'b1;
