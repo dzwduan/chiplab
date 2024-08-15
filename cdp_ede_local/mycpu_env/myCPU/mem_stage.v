@@ -59,6 +59,7 @@ module mem_stage (
     ms_pc  //31:0
   };
 
+
   // forward path
   assign dest_zero = (ms_dest == 5'b0);
   assign forward_enable = ms_valid & ms_gr_we & !dest_zero;
@@ -70,6 +71,7 @@ module mem_stage (
     ms_final_result
   };
   assign ms_to_ds_valid = ms_valid;
+
 
   assign res_from_mem = ms_load_op && ms_valid;
   assign mem_result = data_sram_rdata;

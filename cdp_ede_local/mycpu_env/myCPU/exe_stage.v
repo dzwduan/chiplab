@@ -92,7 +92,7 @@ module exe_stage (
   // forward path
   assign dest_zero = (es_dest == 5'b0);
   assign forward_enable = es_valid & es_gr_we & !dest_zero;
-  assign dep_need_stall = 1'b0;
+  assign dep_need_stall = es_load_op;
   assign es_to_ds_forward_bus = {
     dep_need_stall,
     forward_enable,

@@ -125,7 +125,7 @@ module id_stage (
 
 
 
-  assign ds_ready_go = ~(rf1_forward_stall || rf2_forward_stall);
+  assign ds_ready_go = ~(rf1_forward_stall || rf2_forward_stall || es_dep_need_stall || ms_dep_need_stall);
   assign ds_allowin = !ds_valid || es_allowin && ds_ready_go;
   assign ds_to_es_valid = ds_valid && ds_ready_go;
 
@@ -376,17 +376,19 @@ module id_stage (
         ms_forward_data
        } = ms_to_ds_forward_bus;
 
-  assign rf1_es_need_stall = (es_forward_reg == rf_raddr1) && inst_need_rj;
-  assign rf2_es_need_stall = (es_forward_reg == rf_raddr2) && inst_need_rkd;
-  assign rf1_ms_need_stall = (ms_forward_reg == rf_raddr1) && inst_need_rj;
-  assign rf2_ms_need_stall = (ms_forward_reg == rf_raddr2) && inst_need_rkd;
+  assign rf1_es_need_stall = (es_forward_reg == rf_raddr1) && es_forward_enable && inst_need_rj;
+  assign rf2_es_need_stall = (es_forward_reg == rf_raddr2) && es_forward_enable && inst_need_rkd;
+  assign rf1_ms_need_stall = (ms_forward_reg == rf_raddr1) && ms_forward_enable && inst_need_rj;
+  assign rf2_ms_need_stall = (ms_forward_reg == rf_raddr2) && ms_forward_enable && inst_need_rkd;
 
   assign rj_value = rf1_es_need_stall ? es_forward_data :
                     rf1_ms_need_stall ? ms_forward_data :
+                    (rf_waddr == rf_raddr1 && rf_we) ? rf_wdata :
                     rf_rdata1;
 
   assign rkd_value = rf2_es_need_stall ? es_forward_data :
                      rf2_ms_need_stall ? ms_forward_data :
+                     (rf_waddr == rf_raddr2 && rf_we) ? rf_wdata :
                      rf_rdata2;
 
   assign rf1_forward_stall = rf1_es_need_stall || rf1_ms_need_stall;
