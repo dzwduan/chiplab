@@ -42,9 +42,11 @@ module exe_stage (
   wire [                 31:0] es_alu_result;
   wire [                 31:0] es_alu_src1;
   wire [                 31:0] es_alu_src2;
+  wire                         dest_zero;
+  wire                         forward_enable;
+  wire                         dep_need_stall;
 
-  assign {
-      es_alu_op,  //152:139
+  assign {es_alu_op,  //152:139
       es_load_op,  //138:138
       es_src1_is_pc,  //137:137
       es_src2_is_imm,  //136:136
@@ -82,9 +84,22 @@ module exe_stage (
     end
   end
 
-  assign es_mem_we   = es_store_op;
+  assign es_mem_we = es_store_op;
   assign es_alu_src1 = es_src1_is_pc ? es_pc : es_rj_value;
   assign es_alu_src2 = (es_src2_is_imm) ? es_imm : (es_src2_is_4) ? 32'd4 : es_rkd_value;
+
+
+  // forward path
+  assign dest_zero = (es_dest == 5'b0);
+  assign forward_enable = es_valid & es_gr_we & !dest_zero;
+  assign dep_need_stall = 1'b0;
+  assign es_to_ds_forward_bus = {
+    dep_need_stall,
+    forward_enable,
+    es_dest,
+    es_alu_result
+  };
+  assign es_to_ds_valid = es_valid;
 
   alu u_alu (
       .alu_op    (es_alu_op),

@@ -106,10 +106,26 @@ module id_stage (
   wire [                31:0] ds_pc;
   wire [                31:0] ds_inst;
   wire                        ds_ready_go;
+  wire                        inst_need_rj;
+  wire                        inst_need_rkd;
+  wire                        ms_forward_enable;
+  wire [                 4:0] ms_forward_reg;
+  wire [                31:0] ms_forward_data;
+  wire                        ms_dep_need_stall;
+  wire                        es_dep_need_stall;
+  wire                        es_forward_enable;
+  wire [                 4:0] es_forward_reg;
+  wire [                31:0] es_forward_data;
+  wire                        rf1_forward_stall;
+  wire                        rf2_forward_stall;
+  wire                        rf1_es_need_stall;
+  wire                        rf2_es_need_stall;
+  wire                        rf1_ms_need_stall;
+  wire                        rf2_ms_need_stall;
 
 
 
-  assign ds_ready_go = 1'b1;
+  assign ds_ready_go = ~(rf1_forward_stall || rf2_forward_stall);
   assign ds_allowin = !ds_valid || es_allowin && ds_ready_go;
   assign ds_to_es_valid = ds_valid && ds_ready_go;
 
@@ -200,6 +216,76 @@ module id_stage (
   assign need_si26 = inst_b | inst_bl;
   assign src2_is_4 = inst_jirl | inst_bl;
 
+  assign inst_need_rj = inst_add_w | inst_sub_w | inst_addi_w | inst_slt | inst_sltu |
+      // inst_slti       |
+      // inst_sltui      |
+      inst_and | inst_or | inst_nor | inst_xor |
+      // inst_andi       |
+      // inst_ori        |
+      // inst_xori       |
+      // inst_mul_w      |
+      // inst_mulh_w     |
+      // inst_mulh_wu    |
+      // inst_div_w      |
+      // inst_div_wu     |
+      // inst_mod_w      |
+      // inst_mod_wu     |
+      // inst_sll_w      |
+      // inst_srl_w      |
+      // inst_sra_w      |
+      inst_slli_w | inst_srli_w | inst_srai_w | inst_beq | inst_bne;
+  // inst_blt        |
+  // inst_bltu       |
+  // inst_bge        |
+  // inst_bgeu       |
+  // inst_jirl       |
+  // inst_ld_b       |
+  // inst_ld_bu      |
+  // inst_ld_h       |
+  // inst_ld_hu      |
+  // inst_ld_w       |
+  // inst_st_b       |
+  // inst_st_h       |
+  // inst_st_w       |
+  // inst_preld      |
+  // inst_ll_w       |
+  // inst_sc_w       |
+  // inst_csrxchg    |
+  // inst_valid_cacop|
+  // inst_invtlb     ;
+
+  assign inst_need_rkd = inst_add_w   |
+                       inst_sub_w   |
+                       inst_slt     |
+                       inst_sltu    |
+                       inst_and     |
+                       inst_or      |
+                       inst_nor     |
+                       inst_xor     |
+      //  inst_mul_w   |
+      //  inst_mulh_w  |
+      //  inst_mulh_wu |
+      //  inst_div_w   |
+      //  inst_div_wu  |
+      //  inst_mod_w   |
+      //  inst_mod_wu  |
+      //  inst_sll_w   |
+      //  inst_srl_w   |
+      //  inst_sra_w   |
+      inst_beq | inst_bne;
+  //  inst_blt     |
+  //  inst_bltu    |
+  //  inst_bge     |
+  //  inst_bgeu    |
+  //  inst_st_b    |
+  //  inst_st_h    |
+  //  inst_st_w    |
+  //  inst_sc_w    |
+  //  inst_csrwr   |
+  //  inst_csrxchg |
+  //  inst_invtlb  ;
+
+
   assign ds_imm = src2_is_4 ? 32'h4 : need_si20 ? {i20[19:0], 12'b0} :
       /*need_ui5 || need_si12*/{{20{i12[11]}}, i12[11:0]};
 
@@ -250,9 +336,6 @@ module id_stage (
       .wdata (rf_wdata)
   );
 
-  assign rj_value = rf_rdata1;
-  assign rkd_value = rf_rdata2;
-
   assign rj_eq_rd = (rj_value == rkd_value);
   assign br_taken = (   inst_beq  &&  rj_eq_rd
                    || inst_bne  && !rj_eq_rd
@@ -280,5 +363,33 @@ module id_stage (
     ds_pc  //31 :0
   };
 
+  // forward path
+  assign {es_dep_need_stall,
+        es_forward_enable,
+        es_forward_reg   ,
+        es_forward_data
+       } = es_to_ds_forward_bus;
+
+  assign {ms_dep_need_stall,
+        ms_forward_enable,
+        ms_forward_reg   ,
+        ms_forward_data
+       } = ms_to_ds_forward_bus;
+
+  assign rf1_es_need_stall = (es_forward_reg == rf_raddr1) && inst_need_rj;
+  assign rf2_es_need_stall = (es_forward_reg == rf_raddr2) && inst_need_rkd;
+  assign rf1_ms_need_stall = (ms_forward_reg == rf_raddr1) && inst_need_rj;
+  assign rf2_ms_need_stall = (ms_forward_reg == rf_raddr2) && inst_need_rkd;
+
+  assign rj_value = rf1_es_need_stall ? es_forward_data :
+                    rf1_ms_need_stall ? ms_forward_data :
+                    rf_rdata1;
+
+  assign rkd_value = rf2_es_need_stall ? es_forward_data :
+                     rf2_ms_need_stall ? ms_forward_data :
+                     rf_rdata2;
+
+  assign rf1_forward_stall = rf1_es_need_stall || rf1_ms_need_stall;
+  assign rf2_forward_stall = rf2_es_need_stall || rf2_ms_need_stall;
 
 endmodule

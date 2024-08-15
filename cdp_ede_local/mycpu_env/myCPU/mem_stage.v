@@ -30,6 +30,9 @@ module mem_stage (
   wire [                  31:0] mem_result;
   wire [                  31:0] ms_final_result;
   wire                          res_from_mem;
+  wire                          dest_zero;
+  wire                          forward_enable;
+  wire                          dep_need_stall;
 
   assign ms_ready_go = 1'b1;
   assign ms_allowin = ~ms_valid || ms_ready_go && ws_allowin;
@@ -55,6 +58,18 @@ module mem_stage (
     ms_final_result,  //63:32
     ms_pc  //31:0
   };
+
+  // forward path
+  assign dest_zero = (ms_dest == 5'b0);
+  assign forward_enable = ms_valid & ms_gr_we & !dest_zero;
+  assign dep_need_stall = 1'b0;
+  assign ms_to_ds_forward_bus = {
+    dep_need_stall,
+    forward_enable,
+    ms_dest,
+    ms_final_result
+  };
+  assign ms_to_ds_valid = ms_valid;
 
   assign res_from_mem = ms_load_op && ms_valid;
   assign mem_result = data_sram_rdata;
