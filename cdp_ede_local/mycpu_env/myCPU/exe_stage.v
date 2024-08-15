@@ -12,6 +12,9 @@ module exe_stage (
     //to ms
     output wire                         es_to_ms_valid,
     output wire [`ES_TO_MS_BUS_WD -1:0] es_to_ms_bus,
+    //to ds
+    output wire [`ES_TO_DS_BUS_WD -1:0] es_to_ds_forward_bus,
+    output wire                         es_to_ds_valid,
     // to data sram
     output wire                         data_sram_en,
     output wire [                  3:0] data_sram_we,

@@ -9,14 +9,19 @@ module id_stage (
     //from fsF
     input  wire                         fs_to_ds_valid,
     input  wire [`FS_TO_DS_BUS_WD -1:0] fs_to_ds_bus,
-
     //to es
     output wire                         ds_to_es_valid,
     output wire [`DS_TO_ES_BUS_WD -1:0] ds_to_es_bus,
     //to fs
     output wire [`BR_BUS_WD       -1:0] br_bus,
     //to rf: for write back
-    input  wire [`WS_TO_RF_BUS_WD -1:0] ws_to_rf_bus
+    input  wire [`WS_TO_RF_BUS_WD -1:0] ws_to_rf_bus,
+    // RAW hazard
+    input  wire [`ES_TO_DS_BUS_WD -1:0] es_to_ds_forward_bus,
+    input  wire [`MS_TO_DS_BUS_WD -1:0] ms_to_ds_forward_bus,
+    input  wire                         es_to_ds_valid,
+    input  wire                         ms_to_ds_valid,
+    input  wire                         ws_to_ds_valid
 );
 
   wire                        br_taken;

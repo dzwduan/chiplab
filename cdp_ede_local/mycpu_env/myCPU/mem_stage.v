@@ -12,8 +12,10 @@ module mem_stage (
     //to ws
     output wire                         ms_to_ws_valid,
     output wire [`MS_TO_WS_BUS_WD -1:0] ms_to_ws_bus,
-
-    input wire [31:0] data_sram_rdata
+    //to ds
+    output wire [`MS_TO_DS_BUS_WD -1:0] ms_to_ds_forward_bus,
+    output wire                         ms_to_ds_valid,
+    input  wire [                 31:0] data_sram_rdata
 );
 
   reg                           ms_valid;
