@@ -261,7 +261,6 @@ module id_stage (
   assign br_bus = {br_taken, br_target};
 
   assign ds_to_es_bus = {
-    // ds_inst,        //184:153
     alu_op,  //152:139
     load_op,  //138:138
     src1_is_pc,  //137:137

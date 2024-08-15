@@ -40,7 +40,8 @@ module exe_stage (
   wire [                 31:0] es_alu_src1;
   wire [                 31:0] es_alu_src2;
 
-  assign {es_alu_op,  //152:139
+  assign {
+      es_alu_op,  //152:139
       es_load_op,  //138:138
       es_src1_is_pc,  //137:137
       es_src2_is_imm,  //136:136
