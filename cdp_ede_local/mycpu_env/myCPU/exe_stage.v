@@ -79,7 +79,7 @@ module exe_stage (
     end
   end
 
-  assign es_mem_we   = es_load_op || es_store_op;
+  assign es_mem_we   = es_store_op;
   assign es_alu_src1 = es_src1_is_pc ? es_pc : es_rj_value;
   assign es_alu_src2 = (es_src2_is_imm) ? es_imm : (es_src2_is_4) ? 32'd4 : es_rkd_value;
 
@@ -90,6 +90,7 @@ module exe_stage (
       .alu_result(es_alu_result)
   );
 
+  assign data_sram_en    = es_store_op || es_load_op;
   assign data_sram_we    = {4{es_mem_we && es_valid}}; //TODO: add sb sh sw sd
   assign data_sram_addr  = es_alu_result;
   assign data_sram_wdata = es_rkd_value ;
