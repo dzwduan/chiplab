@@ -29,7 +29,7 @@ module wb_stage (
 
   assign ws_ready_go    = 1'b1;
   assign ws_allowin     = ~ws_valid || ws_ready_go;
-  assign ws_to_ds_valid = ws_valid;
+  assign ws_to_ds_valid = ws_valid & ws_gr_we;
 
   always @(posedge clk) begin
     if (reset) begin

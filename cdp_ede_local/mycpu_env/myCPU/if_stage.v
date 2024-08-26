@@ -71,7 +71,7 @@ module if_stage (
   assign fs_allowin      = !fs_valid || fs_ready_go && ds_allowin;
   assign fs_to_ds_valid  = fs_valid && fs_ready_go;
 
-  assign inst_sram_en    = 1'b1;
+  assign inst_sram_en    = ~reset && fs_allowin;
   assign inst_sram_we    = 4'b0;
   assign inst_sram_addr  = nextpc;  // 在pre fetch阶段提前给addr，因为sram是同步的
   assign inst_sram_wdata = 32'b0;

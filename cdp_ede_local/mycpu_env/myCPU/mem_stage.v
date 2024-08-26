@@ -63,7 +63,7 @@ module mem_stage (
   // forward path
   assign dest_zero = (ms_dest == 5'b0);
   assign forward_enable = ms_valid & ms_gr_we & !dest_zero;
-  assign dep_need_stall = 1'b0;
+  assign dep_need_stall = ms_load_op;
   assign ms_to_ds_forward_bus = {
     dep_need_stall,
     forward_enable,

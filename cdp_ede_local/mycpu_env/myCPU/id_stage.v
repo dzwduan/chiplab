@@ -80,14 +80,12 @@ module id_stage (
   wire                        inst_beq;
   wire                        inst_bne;
   wire                        inst_lu12i_w;
-
   wire                        need_ui5;
   wire                        need_si12;
   wire                        need_si16;
   wire                        need_si20;
   wire                        need_si26;
   wire                        src2_is_4;
-
   wire [                 4:0] rf_raddr1;
   wire [                31:0] rf_rdata1;
   wire [                 4:0] rf_raddr2;
@@ -95,14 +93,8 @@ module id_stage (
   wire                        rf_we;
   wire [                 4:0] rf_waddr;
   wire [                31:0] rf_wdata;
-
-  wire [                31:0] alu_src1;
-  wire [                31:0] alu_src2;
-  wire [                31:0] alu_result;
-
   reg  [`FS_TO_DS_BUS_WD-1:0] fs_to_ds_bus_r;
   reg                         ds_valid;
-
   wire [                31:0] ds_pc;
   wire [                31:0] ds_inst;
   wire                        ds_ready_go;
@@ -122,6 +114,9 @@ module id_stage (
   wire                        rf2_es_need_stall;
   wire                        rf1_ms_need_stall;
   wire                        rf2_ms_need_stall;
+  wire                        rf1_ws_need_stall;
+  wire                        rf2_ws_need_stall;
+
 
 
 
@@ -233,20 +228,20 @@ module id_stage (
       // inst_sll_w      |
       // inst_srl_w      |
       // inst_sra_w      |
-      inst_slli_w | inst_srli_w | inst_srai_w | inst_beq | inst_bne;
-  // inst_blt        |
-  // inst_bltu       |
-  // inst_bge        |
-  // inst_bgeu       |
-  // inst_jirl       |
-  // inst_ld_b       |
-  // inst_ld_bu      |
-  // inst_ld_h       |
-  // inst_ld_hu      |
-  // inst_ld_w       |
-  // inst_st_b       |
-  // inst_st_h       |
-  // inst_st_w       |
+      inst_slli_w | inst_srli_w | inst_srai_w | inst_beq | inst_bne |
+      // inst_blt        |
+      // inst_bltu       |
+      // inst_bge        |
+      // inst_bgeu       |
+      // inst_jirl       |
+      // inst_ld_b       |
+      // inst_ld_bu      |
+      // inst_ld_h       |
+      // inst_ld_hu      |
+      inst_ld_w |
+      // inst_st_b       |
+      // inst_st_h       |
+      inst_st_w;
   // inst_preld      |
   // inst_ll_w       |
   // inst_sc_w       |
@@ -272,15 +267,15 @@ module id_stage (
       //  inst_sll_w   |
       //  inst_srl_w   |
       //  inst_sra_w   |
-      inst_beq | inst_bne;
-  //  inst_blt     |
-  //  inst_bltu    |
-  //  inst_bge     |
-  //  inst_bgeu    |
-  //  inst_st_b    |
-  //  inst_st_h    |
-  //  inst_st_w    |
-  //  inst_sc_w    |
+      inst_beq | inst_bne |
+      //  inst_blt     |
+      //  inst_bltu    |
+      //  inst_bge     |
+      //  inst_bgeu    |
+      //  inst_st_b    |
+      //  inst_st_h    |
+      inst_st_w;
+  //inst_sc_w       |
   //  inst_csrwr   |
   //  inst_csrxchg |
   //  inst_invtlb  ;
@@ -380,6 +375,8 @@ module id_stage (
   assign rf2_es_need_stall = (es_forward_reg == rf_raddr2) && es_forward_enable && inst_need_rkd;
   assign rf1_ms_need_stall = (ms_forward_reg == rf_raddr1) && ms_forward_enable && inst_need_rj;
   assign rf2_ms_need_stall = (ms_forward_reg == rf_raddr2) && ms_forward_enable && inst_need_rkd;
+  assign rf1_ws_need_stall = (rf_waddr == rf_raddr1) && ws_to_ds_valid && inst_need_rj;
+  assign rf2_ws_need_stall = (rf_waddr == rf_raddr2) && ws_to_ds_valid && inst_need_rkd;
 
   // assign rj_value = rf1_es_need_stall ? es_forward_data :
   //                   rf1_ms_need_stall ? ms_forward_data :
@@ -393,9 +390,11 @@ module id_stage (
 
   assign {rf1_forward_stall, rj_value}  = rf1_es_need_stall ? {es_dep_need_stall, es_forward_data} :
                                           rf1_ms_need_stall ? {ms_dep_need_stall, ms_forward_data} :
+                                          rf1_ws_need_stall ? {1'b0, rf_wdata} :
                                                               {1'b0, rf_rdata1};
   assign {rf2_forward_stall, rkd_value} = rf2_es_need_stall ? {es_dep_need_stall, es_forward_data} :
                                           rf2_ms_need_stall ? {ms_dep_need_stall, ms_forward_data} :
+                                          rf2_ws_need_stall ? {1'b0, rf_wdata} :
                                                               {1'b0, rf_rdata2};
 
 endmodule
