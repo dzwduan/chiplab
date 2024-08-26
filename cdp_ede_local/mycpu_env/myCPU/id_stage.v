@@ -32,11 +32,13 @@ module id_stage (
   wire                        src1_is_pc;
   wire                        src2_is_imm;
   wire                        res_from_mem;
+  wire [                 1:0] mem_size;
   wire                        dst_is_r1;
   wire                        gr_we;
-  wire                        mem_we;
   wire                        src_reg_is_rd;
   wire                        rj_eq_rd;
+  wire                        rj_lt_rd_unsign;
+  wire                        rj_lt_rd_sign;
   wire [                 4:0] dest;
   wire [                31:0] rj_value;
   wire [                31:0] rkd_value;
@@ -60,32 +62,72 @@ module id_stage (
   wire [                 3:0] op_21_20_d;
   wire [                31:0] op_19_15_d;
 
+  wire [                 3:0] mul_div_op;
+  wire                        mul_div_sign;
+
   wire                        inst_add_w;
   wire                        inst_sub_w;
   wire                        inst_slt;
+  wire                        inst_slti;
   wire                        inst_sltu;
+  wire                        inst_sltui;
   wire                        inst_nor;
   wire                        inst_and;
+  wire                        inst_andi;
   wire                        inst_or;
+  wire                        inst_ori;
   wire                        inst_xor;
+  wire                        inst_xori;
+  wire                        inst_sll_w;
   wire                        inst_slli_w;
+  wire                        inst_srl_w;
   wire                        inst_srli_w;
+  wire                        inst_sra_w;
   wire                        inst_srai_w;
   wire                        inst_addi_w;
+
+  wire                        inst_ld_b;
+  wire                        inst_ld_bu;
+  wire                        inst_ld_h;
+  wire                        inst_ld_hu;
   wire                        inst_ld_w;
+  wire                        inst_st_b;
+  wire                        inst_st_h;
   wire                        inst_st_w;
+
   wire                        inst_jirl;
   wire                        inst_b;
   wire                        inst_bl;
   wire                        inst_beq;
   wire                        inst_bne;
+  wire                        inst_blt;
+  wire                        inst_bge;
+  wire                        inst_bltu;
+  wire                        inst_bgeu;
+
   wire                        inst_lu12i_w;
+  wire                        inst_mul_w;
+  wire                        inst_mulh_w;
+  wire                        inst_mulh_wu;
+  wire                        inst_div_w;
+  wire                        inst_mod_w;
+  wire                        inst_div_wu;
+  wire                        inst_mod_wu;
+
+  wire                        inst_pcaddi;
+  wire                        inst_pcaddu12i;
+
   wire                        need_ui5;
   wire                        need_si12;
   wire                        need_si16;
   wire                        need_si20;
   wire                        need_si26;
   wire                        src2_is_4;
+
+  wire                        mem_b_size;
+  wire                        mem_h_size;
+  wire                        mem_sign_exted;
+
   wire [                 4:0] rf_raddr1;
   wire [                31:0] rf_rdata1;
   wire [                 4:0] rf_raddr2;
@@ -182,27 +224,74 @@ module id_stage (
   assign inst_srli_w = op_31_26_d[6'h00] & op_25_22_d[4'h1] & op_21_20_d[2'h0] & op_19_15_d[5'h09];
   assign inst_srai_w = op_31_26_d[6'h00] & op_25_22_d[4'h1] & op_21_20_d[2'h0] & op_19_15_d[5'h11];
   assign inst_addi_w = op_31_26_d[6'h00] & op_25_22_d[4'ha];
+
+  assign inst_mul_w = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h1] & op_19_15_d[5'h18];
+  assign inst_mulh_w = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h1] & op_19_15_d[5'h19];
+  assign inst_mulh_wu = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h1] & op_19_15_d[5'h1a];
+  assign inst_div_w = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h2] & op_19_15_d[5'h00];
+  assign inst_mod_w = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h2] & op_19_15_d[5'h01];
+  assign inst_div_wu = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h2] & op_19_15_d[5'h02];
+  assign inst_mod_wu = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h2] & op_19_15_d[5'h03];
+
+
+
+  assign inst_ld_b = op_31_26_d[6'h0a] & op_25_22_d[4'h0];
+  assign inst_ld_h = op_31_26_d[6'h0a] & op_25_22_d[4'h1];
   assign inst_ld_w = op_31_26_d[6'h0a] & op_25_22_d[4'h2];
+  assign inst_st_b = op_31_26_d[6'h0a] & op_25_22_d[4'h4];
+  assign inst_st_h = op_31_26_d[6'h0a] & op_25_22_d[4'h5];
   assign inst_st_w = op_31_26_d[6'h0a] & op_25_22_d[4'h6];
+  assign inst_ld_bu = op_31_26_d[6'h0a] & op_25_22_d[4'h8];
+  assign inst_ld_hu = op_31_26_d[6'h0a] & op_25_22_d[4'h9];
+
   assign inst_jirl = op_31_26_d[6'h13];
   assign inst_b = op_31_26_d[6'h14];
   assign inst_bl = op_31_26_d[6'h15];
   assign inst_beq = op_31_26_d[6'h16];
   assign inst_bne = op_31_26_d[6'h17];
+  assign inst_blt = op_31_26_d[6'h18];
+  assign inst_bge = op_31_26_d[6'h19];
+  assign inst_bltu = op_31_26_d[6'h1a];
+  assign inst_bgeu = op_31_26_d[6'h1b];
   assign inst_lu12i_w = op_31_26_d[6'h05] & ~ds_inst[25];
+  assign inst_pcaddi = op_31_26_d[6'h06] & ~ds_inst[25];
+  assign inst_pcaddu12i = op_31_26_d[6'h07] & ~ds_inst[25];
 
-  assign alu_op[0] = inst_add_w | inst_addi_w | inst_ld_w | inst_st_w | inst_jirl | inst_bl;
+  assign alu_op[0] =inst_add_w      |
+                    inst_addi_w     |
+                    inst_ld_b       |
+                    inst_ld_h       |
+                    inst_ld_w       |
+                    inst_st_b       |
+                    inst_st_h       |
+                    inst_st_w       |
+                    inst_ld_bu      |
+                    inst_ld_hu      |
+      // inst_ll_w       |
+      // inst_sc_w       |
+      inst_jirl | inst_bl | inst_pcaddi | inst_pcaddu12i;
+  // inst_valid_cacop|
+  // inst_preld      ;
+
+
   assign alu_op[1] = inst_sub_w;
-  assign alu_op[2] = inst_slt;
-  assign alu_op[3] = inst_sltu;
-  assign alu_op[4] = inst_and;
+  assign alu_op[2] = inst_slt | inst_slti;
+  assign alu_op[3] = inst_sltu | inst_sltui;
+  assign alu_op[4] = inst_and | inst_andi;
   assign alu_op[5] = inst_nor;
-  assign alu_op[6] = inst_or;
-  assign alu_op[7] = inst_xor;
-  assign alu_op[8] = inst_slli_w;
-  assign alu_op[9] = inst_srli_w;
-  assign alu_op[10] = inst_srai_w;
+  assign alu_op[6] = inst_or | inst_ori;
+  assign alu_op[7] = inst_xor | inst_xori;
+  assign alu_op[8] = inst_sll_w | inst_slli_w;
+  assign alu_op[9] = inst_srl_w | inst_srli_w;
+  assign alu_op[10] = inst_sra_w | inst_srai_w;
   assign alu_op[11] = inst_lu12i_w;
+
+  assign mul_div_op[0] = inst_mul_w;
+  assign mul_div_op[1] = inst_mulh_w | inst_mulh_wu;
+  assign mul_div_op[2] = inst_div_w | inst_div_wu;
+  assign mul_div_op[3] = inst_mod_w | inst_mod_wu;
+
+  assign mul_div_sign = inst_mul_w | inst_mulh_w | inst_div_w | inst_mod_w;
 
   assign need_ui5 = inst_slli_w | inst_srli_w | inst_srai_w;
   assign need_si12 = inst_addi_w | inst_ld_w | inst_st_w;
@@ -211,37 +300,48 @@ module id_stage (
   assign need_si26 = inst_b | inst_bl;
   assign src2_is_4 = inst_jirl | inst_bl;
 
-  assign inst_need_rj = inst_add_w | inst_sub_w | inst_addi_w | inst_slt | inst_sltu |
-      // inst_slti       |
-      // inst_sltui      |
-      inst_and | inst_or | inst_nor | inst_xor |
-      // inst_andi       |
-      // inst_ori        |
-      // inst_xori       |
-      // inst_mul_w      |
-      // inst_mulh_w     |
-      // inst_mulh_wu    |
-      // inst_div_w      |
-      // inst_div_wu     |
-      // inst_mod_w      |
-      // inst_mod_wu     |
-      // inst_sll_w      |
-      // inst_srl_w      |
-      // inst_sra_w      |
-      inst_slli_w | inst_srli_w | inst_srai_w | inst_beq | inst_bne |
-      // inst_blt        |
-      // inst_bltu       |
-      // inst_bge        |
-      // inst_bgeu       |
-      // inst_jirl       |
-      // inst_ld_b       |
-      // inst_ld_bu      |
-      // inst_ld_h       |
-      // inst_ld_hu      |
-      inst_ld_w |
-      // inst_st_b       |
-      // inst_st_h       |
-      inst_st_w;
+  assign inst_need_rj = inst_add_w      |
+                        inst_sub_w      |
+                        inst_addi_w     |
+                        inst_slt        |
+                        inst_sltu       |
+                        inst_slti       |
+                        inst_sltui      |
+                        inst_and        |
+                        inst_or         |
+                        inst_nor        |
+                        inst_xor        |
+                        inst_andi       |
+                        inst_ori        |
+                        inst_xori       |
+                        inst_mul_w      |
+                        inst_mulh_w     |
+                        inst_mulh_wu    |
+                        inst_div_w      |
+                        inst_div_wu     |
+                        inst_mod_w      |
+                        inst_mod_wu     |
+                        inst_sll_w      |
+                        inst_srl_w      |
+                        inst_sra_w      |
+                        inst_slli_w     |
+                        inst_srli_w     |
+                        inst_srai_w     |
+                        inst_beq        |
+                        inst_bne        |
+                        inst_blt        |
+                        inst_bltu       |
+                        inst_bge        |
+                        inst_bgeu       |
+                        inst_jirl       |
+                        inst_ld_b       |
+                        inst_ld_bu      |
+                        inst_ld_h       |
+                        inst_ld_hu      |
+                        inst_ld_w       |
+                        inst_st_b       |
+                        inst_st_h       |
+                        inst_st_w;
   // inst_preld      |
   // inst_ll_w       |
   // inst_sc_w       |
@@ -257,29 +357,31 @@ module id_stage (
                        inst_or      |
                        inst_nor     |
                        inst_xor     |
-      //  inst_mul_w   |
-      //  inst_mulh_w  |
-      //  inst_mulh_wu |
-      //  inst_div_w   |
-      //  inst_div_wu  |
-      //  inst_mod_w   |
-      //  inst_mod_wu  |
-      //  inst_sll_w   |
-      //  inst_srl_w   |
-      //  inst_sra_w   |
-      inst_beq | inst_bne |
-      //  inst_blt     |
-      //  inst_bltu    |
-      //  inst_bge     |
-      //  inst_bgeu    |
-      //  inst_st_b    |
-      //  inst_st_h    |
-      inst_st_w;
-  //inst_sc_w       |
-  //  inst_csrwr   |
-  //  inst_csrxchg |
+                       inst_mul_w   |
+                       inst_mulh_w  |
+                       inst_mulh_wu |
+                       inst_div_w   |
+                       inst_div_wu  |
+                       inst_mod_w   |
+                       inst_mod_wu  |
+                       inst_sll_w   |
+                       inst_srl_w   |
+                       inst_sra_w   |
+                       inst_beq     |
+                       inst_bne     |
+                       inst_blt     |
+                       inst_bltu    |
+                       inst_bge     |
+                       inst_bgeu    |
+                       inst_st_b    |
+                       inst_st_h    |
+                       inst_st_w    ;
+  //  inst_sc_w       |
+  //  inst_csrwr      |
+  //  inst_csrxchg    |
   //  inst_invtlb  ;
 
+  //TODO: dont care pcaddi pc_addu12i
 
   assign ds_imm = src2_is_4 ? 32'h4 : need_si20 ? {i20[19:0], 12'b0} :
       /*need_ui5 || need_si12*/{{20{i12[11]}}, i12[11:0]};
@@ -292,24 +394,47 @@ module id_stage (
 
   assign src1_is_pc = inst_jirl | inst_bl;
 
-  assign src2_is_imm   = inst_slli_w |
-                       inst_srli_w |
-                       inst_srai_w |
-                       inst_addi_w |
-                       inst_ld_w   |
-                       inst_st_w   |
-                       inst_lu12i_w|
-                       inst_jirl   |
-                       inst_bl     ;
+  assign src2_is_imm = inst_slli_w     |
+                       inst_srli_w     |
+                       inst_srai_w     |
+                       inst_addi_w     |
+                       inst_slti       |
+                       inst_sltui      |
+                       inst_andi       |
+                       inst_ori        |
+                       inst_xori       |
+                       inst_pcaddi     |
+                       inst_pcaddu12i  |
+                       inst_ld_b       |
+                       inst_ld_h       |
+                       inst_ld_w       |
+                       inst_ld_bu      |
+                       inst_ld_hu      |
+                       inst_st_b       |
+                       inst_st_h       |
+                       inst_st_w       ;
 
-  assign load_op = inst_ld_w;
-  assign store_op = inst_st_w;
+  assign load_op = inst_ld_b | inst_ld_h | inst_ld_w | inst_ld_bu | inst_ld_hu;
+  assign store_op = inst_st_b | inst_st_h | inst_st_w;
+  assign mem_b_size = inst_ld_b | inst_ld_bu | inst_st_b;
+  assign mem_h_size = inst_ld_h | inst_ld_hu | inst_st_h;
+  assign mem_sign_exted = inst_ld_b | inst_ld_h;
 
+  assign mem_size = {mem_h_size, mem_b_size};
 
   assign res_from_mem = inst_ld_w;
   assign dst_is_r1 = inst_bl;
-  assign gr_we = ~inst_st_w & ~inst_beq & ~inst_bne & ~inst_b;
-  assign mem_we = inst_st_w;
+  assign gr_we =       ~inst_st_b       &
+                       ~inst_st_h       &
+                       ~inst_st_w       &
+                       ~inst_beq        &
+                       ~inst_bne        &
+                       ~inst_blt        &
+                       ~inst_bge        &
+                       ~inst_bltu       &
+                       ~inst_bgeu       &
+                       ~inst_b          ;
+
   assign dest = dst_is_r1 ? 5'd1 : rd;
 
   assign rf_raddr1 = rj;
@@ -332,14 +457,23 @@ module id_stage (
   );
 
   assign rj_eq_rd = (rj_value == rkd_value);
+  assign rj_lt_rd_unsign = (rj_value < rkd_value);
+  assign rj_lt_rd_sign = (rj_value[31] && ~rkd_value[31]) ? 1'b1 :
+                         (~rj_value[31] && rkd_value[31]) ? 1'b0 : rj_lt_rd_unsign;
+
   assign br_taken = (   inst_beq  &&  rj_eq_rd
-                   || inst_bne  && !rj_eq_rd
-                   || inst_jirl
-                   || inst_bl
-                   || inst_b
+                    || inst_bne  && !rj_eq_rd
+                    || inst_blt  &&  rj_lt_rd_sign
+                    || inst_bge  && !rj_lt_rd_sign
+                    || inst_bltu &&  rj_lt_rd_unsign
+                    || inst_bgeu && !rj_lt_rd_unsign
+                    || inst_jirl
+                    || inst_bl
+                    || inst_b
                   ) && ds_valid;
   assign br_target = (inst_beq || inst_bne || inst_bl || inst_b) ? (ds_pc + br_offs) :
       /*inst_jirl*/ (rj_value + jirl_offs);
+
 
   assign br_bus = {br_taken, br_target};
 
@@ -377,16 +511,6 @@ module id_stage (
   assign rf2_ms_need_stall = (ms_forward_reg == rf_raddr2) && ms_forward_enable && inst_need_rkd;
   assign rf1_ws_need_stall = (rf_waddr == rf_raddr1) && ws_to_ds_valid && inst_need_rj;
   assign rf2_ws_need_stall = (rf_waddr == rf_raddr2) && ws_to_ds_valid && inst_need_rkd;
-
-  // assign rj_value = rf1_es_need_stall ? es_forward_data :
-  //                   rf1_ms_need_stall ? ms_forward_data :
-  //                   (rf_waddr == rf_raddr1 && rf_we && ws_to_ds_valid) ? rf_wdata :
-  //                   rf_rdata1;
-
-  // assign rkd_value = rf2_es_need_stall ? es_forward_data :
-  //                    rf2_ms_need_stall ? ms_forward_data :
-  //                    (rf_waddr == rf_raddr2 && rf_we && ws_to_ds_valid) ? rf_wdata :
-  //                    rf_rdata2;
 
   assign {rf1_forward_stall, rj_value}  = rf1_es_need_stall ? {es_dep_need_stall, es_forward_data} :
                                           rf1_ms_need_stall ? {ms_dep_need_stall, ms_forward_data} :
