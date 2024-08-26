@@ -478,18 +478,22 @@ module id_stage (
   assign br_bus = {br_taken, br_target};
 
   assign ds_to_es_bus = {
-    alu_op,  //152:139
-    load_op,  //138:138
-    src1_is_pc,  //137:137
-    src2_is_imm,  //136:136
-    src2_is_4,  //135:135
-    gr_we,  //134:134
-    store_op,  //133:133
-    dest,  //132:128
-    ds_imm,  //127:96
-    rj_value,  //95 :64
-    rkd_value,  //63 :32
-    ds_pc  //31 :0
+    mem_sign_exted, //160:160
+    mem_size      , //159:158
+    mul_div_op    , //157:154
+    mul_div_sign  , //153:153
+    alu_op,         //152:139
+    load_op,        //138:138
+    src1_is_pc,     //137:137
+    src2_is_imm,    //136:136
+    src2_is_4,      //135:135
+    gr_we,          //134:134
+    store_op,       //133:133
+    dest,           //132:128
+    ds_imm,         //127:96
+    rj_value,       //95 :64
+    rkd_value,      //63 :32
+    ds_pc           //31 :0
   };
 
   // forward path
@@ -509,8 +513,8 @@ module id_stage (
   assign rf2_es_need_stall = (es_forward_reg == rf_raddr2) && es_forward_enable && inst_need_rkd;
   assign rf1_ms_need_stall = (ms_forward_reg == rf_raddr1) && ms_forward_enable && inst_need_rj;
   assign rf2_ms_need_stall = (ms_forward_reg == rf_raddr2) && ms_forward_enable && inst_need_rkd;
-  assign rf1_ws_need_stall = (rf_waddr == rf_raddr1) && ws_to_ds_valid && inst_need_rj;
-  assign rf2_ws_need_stall = (rf_waddr == rf_raddr2) && ws_to_ds_valid && inst_need_rkd;
+  assign rf1_ws_need_stall = (rf_waddr == rf_raddr1)       && ws_to_ds_valid && inst_need_rj;
+  assign rf2_ws_need_stall = (rf_waddr == rf_raddr2)       && ws_to_ds_valid && inst_need_rkd;
 
   assign {rf1_forward_stall, rj_value}  = rf1_es_need_stall ? {es_dep_need_stall, es_forward_data} :
                                           rf1_ms_need_stall ? {ms_dep_need_stall, ms_forward_data} :
