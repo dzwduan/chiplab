@@ -15,6 +15,12 @@ module exe_stage (
     //to ds
     output wire [`ES_TO_DS_BUS_WD -1:0] es_to_ds_forward_bus,
     output wire                         es_to_ds_valid,
+    //div_mul
+    output                              es_div_enable,
+    output                              es_mul_div_sign,
+    output      [                 31:0] es_rj_value,
+    output      [                 31:0] es_rkd_value,
+    input                               div_complete,
     // to data sram
     output wire                         data_sram_en,
     output wire [                  3:0] data_sram_we,
@@ -36,17 +42,25 @@ module exe_stage (
   wire [                  4:0] es_dest;
   wire [                 31:0] es_imm;
   wire [                 31:0] es_pc;
-  wire [                 31:0] es_rj_value;
-  wire [                 31:0] es_rkd_value;
-  wire                         es_mem_we;
+  wire                         es_mem_sign_exted;
+  wire [                  1:0] es_mem_size;
+  wire [                  3:0] es_mul_div_op;
   wire [                 31:0] es_alu_result;
   wire [                 31:0] es_alu_src1;
   wire [                 31:0] es_alu_src2;
   wire                         dest_zero;
   wire                         forward_enable;
   wire                         dep_need_stall;
+  wire                         es_mul_enable;
+  wire                         div_stall;
+  wire [                  1:0] sram_addr_low2bit;
 
-  assign {es_alu_op,  //152:139
+
+  assign {es_mem_sign_exted,  //160:160
+      es_mem_size,  //159:158
+      es_mul_div_op,  //157:154
+      es_mul_div_sign,  //153:153
+      es_alu_op,  //152:139
       es_load_op,  //138:138
       es_src1_is_pc,  //137:137
       es_src2_is_imm,  //136:136
@@ -84,22 +98,20 @@ module exe_stage (
     end
   end
 
-  assign es_mem_we = es_store_op;
-  assign es_alu_src1 = es_src1_is_pc ? es_pc : es_rj_value;
-  assign es_alu_src2 = (es_src2_is_imm) ? es_imm : (es_src2_is_4) ? 32'd4 : es_rkd_value;
+  assign es_alu_src1          = es_src1_is_pc ? es_pc : es_rj_value;
+  assign es_alu_src2          = (es_src2_is_imm) ? es_imm : (es_src2_is_4) ? 32'd4 : es_rkd_value;
+
+  assign es_div_enable        = (es_mul_div_op[2] | es_mul_div_op[3]) & es_valid;
+  assign es_mul_enable        = es_mul_div_op[0] | es_mul_div_op[1];
+  assign div_stall            = es_div_enable & ~div_complete;
 
 
   // forward path
-  assign dest_zero = (es_dest == 5'b0);
-  assign forward_enable = es_valid & es_gr_we & !dest_zero;
-  assign dep_need_stall = es_load_op;
-  assign es_to_ds_forward_bus = {
-    dep_need_stall,
-    forward_enable,
-    es_dest,
-    es_alu_result
-  };
-  assign es_to_ds_valid = es_valid;
+  assign dest_zero            = (es_dest == 5'b0);
+  assign forward_enable       = es_valid & es_gr_we & !dest_zero;
+  assign dep_need_stall       = es_load_op | es_div_enable | es_mul_enable;
+  assign es_to_ds_forward_bus = {dep_need_stall, forward_enable, es_dest, es_alu_result};
+  assign es_to_ds_valid       = es_valid;
 
   alu u_alu (
       .alu_op    (es_alu_op),
@@ -108,9 +120,46 @@ module exe_stage (
       .alu_result(es_alu_result)
   );
 
-  assign data_sram_en    = es_store_op || es_load_op;
-  assign data_sram_we    = {4{es_mem_we && es_valid}}; //TODO: add sb sh sw sd
+  assign sram_addr_low2bit = {es_alu_result[1], es_alu_result[0]};
+
+// 00 : 0001
+// 01 : 0010
+// 10 : 0100
+// 11 : 1000
+  wire [3:0] es_stb_wen = {
+    sram_addr_low2bit == 2'b11,
+    sram_addr_low2bit == 2'b10,
+    sram_addr_low2bit == 2'b01,
+    sram_addr_low2bit == 2'b00
+  };
+
+// 00 : 0011
+// 01 : 0000
+// 10 : 1100
+// 11 : 0000
+  wire [3:0] es_sth_wen = {
+    sram_addr_low2bit == 2'b10,
+    sram_addr_low2bit == 2'b10,
+    sram_addr_low2bit == 2'b00,
+    sram_addr_low2bit == 2'b00
+  };
+
+  wire [31:0] es_stb_cont = {
+    {8{es_stb_wen[3]}} & es_rkd_value[7:0],
+    {8{es_stb_wen[2]}} & es_rkd_value[7:0],
+    {8{es_stb_wen[1]}} & es_rkd_value[7:0],
+    {8{es_stb_wen[0]}} & es_rkd_value[7:0]
+  };
+
+  wire [31:0] es_sth_cont = {
+    {16{es_sth_wen[3]}} & es_rkd_value[15:0], {16{es_sth_wen[0]}} & es_rkd_value[15:0]
+  };
+
+  assign data_sram_en = |(es_store_op | es_store_op) & es_valid;
+  assign data_sram_we = es_mem_size[0] ? es_stb_wen : es_mem_size[1] ? es_sth_wen : 4'b1111;
   assign data_sram_addr  = es_alu_result;
-  assign data_sram_wdata = es_rkd_value ;
+  assign data_sram_wdata = ({32{es_mem_size[0]}} & es_stb_cont) |
+                           ({32{es_mem_size[0]}} & es_sth_cont) |
+                           ({32{!es_mem_size}}   & es_rkd_value);
 
 endmodule
