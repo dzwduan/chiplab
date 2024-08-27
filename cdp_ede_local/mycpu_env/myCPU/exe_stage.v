@@ -76,7 +76,10 @@ module exe_stage (
 
 
   assign es_to_ms_bus = {
-    es_store_op,  //71:71
+    es_mem_sign_exted,  //78:78 
+    es_store_op      ,  //77:77
+    es_mem_size      ,  //76:75
+    es_mul_div_op    ,  //74:71
     es_load_op,  //70:70
     es_gr_we,  //69:69
     es_dest,  //68:64

@@ -15,7 +15,11 @@ module mem_stage (
     //to ds
     output wire [`MS_TO_DS_BUS_WD -1:0] ms_to_ds_forward_bus,
     output wire                         ms_to_ds_valid,
-    input  wire [                 31:0] data_sram_rdata
+    input  wire [                 31:0] data_sram_rdata,
+        //div mul
+    input  [31:0]     div_result    ,
+    input  [31:0]     mod_result    ,
+    input  [63:0]     mul_result
 );
 
   reg                           ms_valid;
@@ -33,6 +37,13 @@ module mem_stage (
   wire                          dest_zero;
   wire                          forward_enable;
   wire                          dep_need_stall;
+  wire                          ms_mem_sign_exted;
+  wire [                   1:0] ms_mem_size;
+  wire [                   3:0] ms_mul_div_op;
+  wire [                   1:0] sram_addr_low2bit;
+  wire [                   7:0] mem_byteLoaded;
+  wire [                  15:0] mem_halfLoaded;
+  wire [                  31:0] ms_rdata;
 
   assign ms_ready_go = 1'b1;
   assign ms_allowin = ~ms_valid || ms_ready_go && ws_allowin;
@@ -50,13 +61,21 @@ module mem_stage (
     end
   end
 
-  assign {ms_store_op, ms_load_op, ms_gr_we, ms_dest, ms_exe_result, ms_pc} = es_to_ms_bus_r;
+  assign {ms_mem_sign_exted,  //78:78
+      ms_store_op,  //77:77
+      ms_mem_size,  //76:75
+      ms_mul_div_op,  //74:71
+      ms_load_op,  //70:70
+      ms_gr_we,  //69:69
+      ms_dest,  //68:64
+      ms_exe_result,  //63:32
+      ms_pc} = es_to_ms_bus_r;
 
   assign ms_to_ws_bus = {
     ms_gr_we,  //69:69
     ms_dest,  //68:64
     ms_final_result,  //63:32
-    ms_pc  //31:0
+    ms_pc
   };
 
 
@@ -64,17 +83,31 @@ module mem_stage (
   assign dest_zero = (ms_dest == 5'b0);
   assign forward_enable = ms_valid & ms_gr_we & !dest_zero;
   assign dep_need_stall = ms_load_op;
-  assign ms_to_ds_forward_bus = {
-    dep_need_stall,
-    forward_enable,
-    ms_dest,
-    ms_final_result
-  };
+  assign ms_to_ds_forward_bus = {dep_need_stall, forward_enable, ms_dest, ms_final_result};
   assign ms_to_ds_valid = ms_valid;
 
 
-  assign res_from_mem = ms_load_op && ms_valid;
-  assign mem_result = data_sram_rdata;
-  assign ms_final_result = res_from_mem ? mem_result : ms_exe_result;
+  assign ms_rdata = data_sram_rdata;
+  assign sram_addr_low2bit = {ms_exe_result[1], ms_exe_result[0]};
+  assign mem_byteLoaded =   ({8{sram_addr_low2bit==2'b00}} & ms_rdata[ 7: 0]) |
+                            ({8{sram_addr_low2bit==2'b01}} & ms_rdata[15: 8]) |
+                            ({8{sram_addr_low2bit==2'b10}} & ms_rdata[23:16]) |
+                            ({8{sram_addr_low2bit==2'b11}} & ms_rdata[31:24]) ;
+
+  assign mem_halfLoaded = ({16{sram_addr_low2bit==2'b00}} & ms_rdata[15: 0]) |
+                          ({16{sram_addr_low2bit==2'b10}} & ms_rdata[31:16]) ;
+  assign mem_result =
+                    ({32{ms_mem_size[0] &&  ms_mem_sign_exted}} & {{24{mem_byteLoaded[ 7]}}, mem_byteLoaded})|
+                    ({32{ms_mem_size[0] && ~ms_mem_sign_exted}} & { 24'b0                  , mem_byteLoaded})|
+                    ({32{ms_mem_size[1] &&  ms_mem_sign_exted}} & {{16{mem_halfLoaded[15]}}, mem_halfLoaded})|
+                    ({32{ms_mem_size[1] && ~ms_mem_sign_exted}} & { 16'b0                  , mem_halfLoaded})|
+                    ({32{!ms_mem_size}}                         &   ms_rdata  );
+
+ assign ms_final_result =({32{ms_load_op      }} & mem_result       )  |
+                         ({32{ms_mul_div_op[0]}} & mul_result[31:0] )  |
+                         ({32{ms_mul_div_op[1]}} & mul_result[63:32])  |
+                         ({32{ms_mul_div_op[2]}} & div_result       )  |
+                         ({32{ms_mul_div_op[3]}} & mod_result       )  |
+                         ({32{!ms_mul_div_op && !ms_load_op}} & ms_exe_result);
 
 endmodule
