@@ -28,12 +28,12 @@ wire real_complete;
 assign complete_delay = (count == 8'hf0);
 assign real_complete = complete_delay || complete;
 
-always @(posedge div_clk) begin 
-    if (reset) begin 
+always @(posedge div_clk) begin
+    if (reset) begin
         div_signed_buffer <= 1'b0;
         x_31_buffer <= 1'b0;
         y_31_buffer <= 1'b0;
-    end 
+    end
     else if (div) begin
         div_signed_buffer <= div_signed;   //when div inst go to ms, div_signed will be changed. so buffer it.
         x_31_buffer <= x[31];

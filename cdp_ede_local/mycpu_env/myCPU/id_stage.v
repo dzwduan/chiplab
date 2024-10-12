@@ -502,10 +502,10 @@ module id_stage (
   assign br_bus = {br_taken, br_target};
 
   assign ds_to_es_bus = {
-    mem_sign_exted,  //160:160
-    mem_size,  //159:158
-    mul_div_op,  //157:154
-    mul_div_sign,  //153:153
+    mem_sign_exted,  //158:158
+    mem_size,  //157:156
+    mul_div_op,  //155:152
+    mul_div_sign,  //151:151
     alu_op,  //150:139
     load_op,  //138:138
     src1_is_pc,  //137:137

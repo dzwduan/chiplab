@@ -1,7 +1,9 @@
-# Chiplab用户手册 
-## 前言
-chiplab项目致力于构建基于LoongArch32 Reduced的soc敏捷开发平台。如发现问题请在issues提出。
+# CPU设计实战Loongarch复现
 
-详细介绍请参考[CHIPLAB使用介绍](https://chiplab.readthedocs.io/)
-### 交流群
- [slack交流群](https://join.slack.com/t/chiplabworkspace/shared_invite/zt-v1927dwg-qqnHNTcAeko7QsUsdCRoPA)
+## 当前目标
+
+完成对openla500 设计的复刻
+
+## 后续进展
+
+完成乱序 + boot linux + fpga + 多核流程， 整理完advanced 相关讲义，暂时参考soomRV

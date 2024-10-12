@@ -87,7 +87,7 @@ module exe_stage (
   };
 
 
-  assign es_ready_go = 1'b1;
+  assign es_ready_go = !div_stall;  // 没算完div，stall
   assign es_allowin = !es_valid || (es_ready_go && ms_allowin);
   assign es_to_ms_valid = es_valid && es_ready_go;
 
