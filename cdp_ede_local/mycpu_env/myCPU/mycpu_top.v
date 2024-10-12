@@ -1,25 +1,25 @@
 `include "mycpu.vh"
 `default_nettype none
 module mycpu_top (
-    input  wire         clk,
-    input  wire         resetn,
+    input  wire        clk,
+    input  wire        resetn,
     // inst sram interface
-    output wire         inst_sram_en,
-    output wire [3 : 0] inst_sram_we,
-    output wire [ 31:0] inst_sram_addr,
-    output wire [ 31:0] inst_sram_wdata,
-    input  wire [ 31:0] inst_sram_rdata,
+    output wire        inst_sram_en,
+    output wire [ 3:0] inst_sram_we,
+    output wire [31:0] inst_sram_addr,
+    output wire [31:0] inst_sram_wdata,
+    input  wire [31:0] inst_sram_rdata,
     // data sram interface
-    output wire         data_sram_en,
-    output wire [  3:0] data_sram_we,
-    output wire [ 31:0] data_sram_addr,
-    output wire [ 31:0] data_sram_wdata,
-    input  wire [ 31:0] data_sram_rdata,
+    output wire        data_sram_en,
+    output wire [ 3:0] data_sram_we,
+    output wire [31:0] data_sram_addr,
+    output wire [31:0] data_sram_wdata,
+    input  wire [31:0] data_sram_rdata,
     // trace debug interface
-    output wire [ 31:0] debug_wb_pc,
-    output wire [  3:0] debug_wb_rf_we,
-    output wire [  4:0] debug_wb_rf_wnum,
-    output wire [ 31:0] debug_wb_rf_wdata
+    output wire [31:0] debug_wb_pc,
+    output wire [ 3:0] debug_wb_rf_we,
+    output wire [ 4:0] debug_wb_rf_wnum,
+    output wire [31:0] debug_wb_rf_wdata
 );
   reg reset;
   always @(posedge clk) reset <= ~resetn;
@@ -43,6 +43,15 @@ module mycpu_top (
   wire [`BR_BUS_WD       -1:0] br_bus;
   wire [`ES_TO_DS_BUS_WD -1:0] es_to_ds_forward_bus;
   wire [`MS_TO_DS_BUS_WD -1:0] ms_to_ds_forward_bus;
+
+  wire                         es_div_enable;
+  wire                         es_mul_div_sign;
+  wire [                 31:0] es_rj_value;
+  wire [                 31:0] es_rkd_value;
+  wire                         div_complete;
+  wire [                 31:0] div_result;
+  wire [                 31:0] mod_result;
+  wire [                 63:0] mul_result;
 
 
   if_stage u_if_stage (
@@ -88,6 +97,28 @@ module mycpu_top (
       .ws_to_rf_bus        (ws_to_rf_bus)
   );
 
+  div u_div (
+      .div_clk   (clk),
+      .reset     (reset),
+      .div       (es_div_enable),
+      .div_signed(es_mul_div_sign),
+      .x         (es_rj_value),
+      .y         (es_rkd_value),
+      .s         (div_result),
+      .r         (mod_result),
+      .complete  (div_complete)
+  );
+
+  mul u_mul (
+      .mul_clk   (clk),
+      .reset     (reset),
+      .mul_signed(es_mul_div_sign),
+      .x         (es_rj_value),
+      .y         (es_rkd_value),
+      .result    (mul_result)
+  );
+
+
   exe_stage u_exe_stage (
       .clk                 (clk),
       .reset               (reset),
@@ -100,9 +131,15 @@ module mycpu_top (
       //to ms
       .es_to_ms_valid      (es_to_ms_valid),
       .es_to_ms_bus        (es_to_ms_bus),
-      //forward
-      .es_to_ds_valid      (es_to_ds_valid),
+      //to ds
       .es_to_ds_forward_bus(es_to_ds_forward_bus),
+      .es_to_ds_valid      (es_to_ds_valid),
+      //div_mul
+      .es_div_enable       (es_div_enable),
+      .es_mul_div_sign     (es_mul_div_sign),
+      .es_rj_value         (es_rj_value),
+      .es_rkd_value        (es_rkd_value),
+      .div_complete        (div_complete),
       // to data sram
       .data_sram_en        (data_sram_en),
       .data_sram_we        (data_sram_we),
@@ -110,22 +147,27 @@ module mycpu_top (
       .data_sram_wdata     (data_sram_wdata)
   );
 
+
   mem_stage u_mem_stage (
-      .clk            (clk),
-      .reset          (reset),
+      .clk                 (clk),
+      .reset               (reset),
       //allowin
-      .ws_allowin     (ws_allowin),
-      .ms_allowin     (ms_allowin),
+      .ws_allowin          (ws_allowin),
+      .ms_allowin          (ms_allowin),
       //from es
-      .es_to_ms_valid (es_to_ms_valid),
-      .es_to_ms_bus   (es_to_ms_bus),
+      .es_to_ms_valid      (es_to_ms_valid),
+      .es_to_ms_bus        (es_to_ms_bus),
       //to ds
       .ms_to_ds_valid      (ms_to_ds_valid),
       .ms_to_ds_forward_bus(ms_to_ds_forward_bus),
       //to ws
-      .ms_to_ws_valid (ms_to_ws_valid),
-      .ms_to_ws_bus   (ms_to_ws_bus),
-      .data_sram_rdata(data_sram_rdata)
+      .ms_to_ws_valid      (ms_to_ws_valid),
+      .ms_to_ws_bus        (ms_to_ws_bus),
+      .data_sram_rdata     (data_sram_rdata),
+      //div mul
+      .div_result          (div_result),
+      .mod_result          (mod_result),
+      .mul_result          (mul_result)
   );
 
 

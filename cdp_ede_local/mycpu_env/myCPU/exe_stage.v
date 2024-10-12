@@ -16,11 +16,11 @@ module exe_stage (
     output wire [`ES_TO_DS_BUS_WD -1:0] es_to_ds_forward_bus,
     output wire                         es_to_ds_valid,
     //div_mul
-    output                              es_div_enable,
-    output                              es_mul_div_sign,
-    output      [                 31:0] es_rj_value,
-    output      [                 31:0] es_rkd_value,
-    input                               div_complete,
+    output wire                         es_div_enable,
+    output wire                         es_mul_div_sign,
+    output wire [                 31:0] es_rj_value,
+    output wire [                 31:0] es_rkd_value,
+    input  wire                         div_complete,
     // to data sram
     output wire                         data_sram_en,
     output wire [                  3:0] data_sram_we,
@@ -60,7 +60,7 @@ module exe_stage (
       es_mem_size,  //159:158
       es_mul_div_op,  //157:154
       es_mul_div_sign,  //153:153
-      es_alu_op,  //152:139
+      es_alu_op,  //150:139
       es_load_op,  //138:138
       es_src1_is_pc,  //137:137
       es_src2_is_imm,  //136:136
@@ -76,10 +76,9 @@ module exe_stage (
 
 
   assign es_to_ms_bus = {
-    es_mem_sign_exted,  //78:78 
-    es_store_op      ,  //77:77
-    es_mem_size      ,  //76:75
-    es_mul_div_op    ,  //74:71
+    es_mem_sign_exted,  //77:77
+    es_mem_size,  //76:75
+    es_mul_div_op,  //74:71
     es_load_op,  //70:70
     es_gr_we,  //69:69
     es_dest,  //68:64
@@ -125,10 +124,10 @@ module exe_stage (
 
   assign sram_addr_low2bit = {es_alu_result[1], es_alu_result[0]};
 
-// 00 : 0001
-// 01 : 0010
-// 10 : 0100
-// 11 : 1000
+  // 00 : 0001
+  // 01 : 0010
+  // 10 : 0100
+  // 11 : 1000
   wire [3:0] es_stb_wen = {
     sram_addr_low2bit == 2'b11,
     sram_addr_low2bit == 2'b10,
@@ -136,10 +135,10 @@ module exe_stage (
     sram_addr_low2bit == 2'b00
   };
 
-// 00 : 0011
-// 01 : 0000
-// 10 : 1100
-// 11 : 0000
+  // 00 : 0011
+  // 01 : 0000
+  // 10 : 1100
+  // 11 : 0000
   wire [3:0] es_sth_wen = {
     sram_addr_low2bit == 2'b10,
     sram_addr_low2bit == 2'b10,
@@ -158,9 +157,9 @@ module exe_stage (
     {16{es_sth_wen[3]}} & es_rkd_value[15:0], {16{es_sth_wen[0]}} & es_rkd_value[15:0]
   };
 
-  assign data_sram_en = |(es_store_op | es_store_op) & es_valid;
-  assign data_sram_we = es_mem_size[0] ? es_stb_wen : es_mem_size[1] ? es_sth_wen : 4'b1111;
-  assign data_sram_addr  = es_alu_result;
+  assign data_sram_en = |(es_store_op | es_load_op) & es_valid;
+  assign data_sram_we = es_mem_size[0] ? es_stb_wen : es_mem_size[1] ? es_sth_wen : (!es_mem_size & es_store_op) ? 4'b1111 : 4'b0000;
+  assign data_sram_addr = es_alu_result;
   assign data_sram_wdata = ({32{es_mem_size[0]}} & es_stb_cont) |
                            ({32{es_mem_size[0]}} & es_sth_cont) |
                            ({32{!es_mem_size}}   & es_rkd_value);

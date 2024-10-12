@@ -16,16 +16,15 @@ module mem_stage (
     output wire [`MS_TO_DS_BUS_WD -1:0] ms_to_ds_forward_bus,
     output wire                         ms_to_ds_valid,
     input  wire [                 31:0] data_sram_rdata,
-        //div mul
-    input  [31:0]     div_result    ,
-    input  [31:0]     mod_result    ,
-    input  [63:0]     mul_result
+    //div mul
+    input  wire [                 31:0] div_result,
+    input  wire [                 31:0] mod_result,
+    input  wire [                 63:0] mul_result
 );
 
   reg                           ms_valid;
   reg  [`ES_TO_MS_BUS_WD-1 : 0] es_to_ms_bus_r;
   wire                          ms_ready_go;
-  wire                          ms_store_op;
   wire                          ms_load_op;
   wire                          ms_gr_we;
   wire [                   4:0] ms_dest;
@@ -61,8 +60,7 @@ module mem_stage (
     end
   end
 
-  assign {ms_mem_sign_exted,  //78:78
-      ms_store_op,  //77:77
+  assign {ms_mem_sign_exted,  //77:77
       ms_mem_size,  //76:75
       ms_mul_div_op,  //74:71
       ms_load_op,  //70:70
@@ -103,7 +101,7 @@ module mem_stage (
                     ({32{ms_mem_size[1] && ~ms_mem_sign_exted}} & { 16'b0                  , mem_halfLoaded})|
                     ({32{!ms_mem_size}}                         &   ms_rdata  );
 
- assign ms_final_result =({32{ms_load_op      }} & mem_result       )  |
+  assign ms_final_result =({32{ms_load_op      }} & mem_result       )  |
                          ({32{ms_mul_div_op[0]}} & mul_result[31:0] )  |
                          ({32{ms_mul_div_op[1]}} & mul_result[63:32])  |
                          ({32{ms_mul_div_op[2]}} & div_result       )  |
@@ -111,3 +109,5 @@ module mem_stage (
                          ({32{!ms_mul_div_op && !ms_load_op}} & ms_exe_result);
 
 endmodule
+
+//TODO: fix ms to ws bus

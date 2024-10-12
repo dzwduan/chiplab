@@ -15,3 +15,4 @@ open-la500
 vivado*
 # cdp_ede_local/mycpu_env/func
 cdp_ede_local/mycpu_env/func/obj
+.Xil

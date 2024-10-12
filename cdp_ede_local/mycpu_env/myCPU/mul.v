@@ -1,6 +1,6 @@
 module YDecoder(
-    input yc, yb, ya, //c -> i+1; b -> i; a -> i-1
-    output negx, x, neg2x, _2x
+    input wire yc, yb, ya, //c -> i+1; b -> i; a -> i-1
+    output wire negx, x, neg2x, _2x
     );
 
 assign negx = (yc & yb & ~ya) | (yc & ~yb & ya);
@@ -12,11 +12,11 @@ endmodule
 
 
 module BoothBase(
-    input negx, x, neg2x, _2x,
-    input InX,
-    input PosLastX, NegLastX,
-    output PosNextX, NegNextX,
-    output OutX
+    input wire negx, x, neg2x, _2x,
+    input wire InX,
+    input wire PosLastX, NegLastX,
+    output wire PosNextX, NegNextX,
+    output wire OutX
     );
 
 assign OutX = (negx & ~InX) | (x & InX) | (neg2x & NegLastX) | (_2x & PosLastX);
@@ -27,10 +27,10 @@ endmodule
 
 
 module BoothInterBase(
-    input [2:0] y,
-    input [63:0] InX,
-    output [63:0] OutX,
-    output Carry
+    input wire [2:0] y,
+    input wire [63:0] InX,
+    output wire [63:0] OutX,
+    output wire Carry
 );
 
 wire negx, x, neg2x, _2x;
@@ -64,8 +64,8 @@ endmodule
 
 
 module addr(
-    input A, B, C,
-    output Carry, S
+    input wire A, B, C,
+    output wire Carry, S
     );
 
 assign S = ~A & ~B & C | ~A & B & ~C | A & ~B & ~C | A & B & C;
@@ -75,10 +75,10 @@ endmodule
 
 
 module WallaceTreeBase(
-    input [16:0] InData,
-    input [13:0] CIn,
-    output [13:0] COut,
-    output C, S
+    input wire [16:0] InData,
+    input wire [13:0] CIn,
+    output wire [13:0] COut,
+    output wire C, S
     );
 
 //first stage
@@ -118,10 +118,10 @@ endmodule
 //-------------------------------------------------------------------------------------------------------------------
 
 module mul(
-    input mul_clk, reset,
-    input mul_signed,
-    input [31:0] x, y, //x扩展至64位 y扩展至33位 区别有无符号
-    output [63:0] result
+    input wire mul_clk, reset,
+    input wire mul_signed,
+    input wire [31:0] x, y, //x扩展至64位 y扩展至33位 区别有无符号
+    output wire [63:0] result
     );
 
 wire [63:0] CalX;

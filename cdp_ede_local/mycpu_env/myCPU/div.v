@@ -1,11 +1,11 @@
 //x/y   //执行需要34个周期
 module div(
-    input div_clk, reset,
-    input div,
-    input div_signed,
-    input [31:0] x, y,
-    output [31:0] s, r,
-    output complete
+    input wire div_clk, reset,
+    input wire div,
+    input wire div_signed,
+    input wire [31:0] x, y,
+    output wire [31:0] s, r,
+    output wire complete
     );
 
 reg [32:0] UnsignS;
@@ -16,7 +16,7 @@ wire [32:0] tmp_d;
 wire [32:0] result_r;
 wire [32:0] UnsignX, UnsignY;
 
-reg  div_signed_buffer; 
+reg  div_signed_buffer;
 reg  x_31_buffer;
 reg  y_31_buffer;
 wire real_div_signed;
@@ -34,7 +34,7 @@ always @(posedge div_clk) begin
         x_31_buffer <= 1'b0;
         y_31_buffer <= 1'b0;
     end 
-    else if (div) begin 
+    else if (div) begin
         div_signed_buffer <= div_signed;   //when div inst go to ms, div_signed will be changed. so buffer it.
         x_31_buffer <= x[31];
         y_31_buffer <= y[31];
