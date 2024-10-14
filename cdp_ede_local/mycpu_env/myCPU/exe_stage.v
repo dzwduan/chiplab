@@ -147,21 +147,22 @@ module exe_stage (
   };
 
   wire [31:0] es_stb_cont = {
-    {8{es_stb_wen[3]}} & es_rkd_value[7:0],
+    {8{es_stb_wen[3]}} & es_rkd_value[7:0], `
     {8{es_stb_wen[2]}} & es_rkd_value[7:0],
     {8{es_stb_wen[1]}} & es_rkd_value[7:0],
     {8{es_stb_wen[0]}} & es_rkd_value[7:0]
   };
+
 
   wire [31:0] es_sth_cont = {
     {16{es_sth_wen[3]}} & es_rkd_value[15:0], {16{es_sth_wen[0]}} & es_rkd_value[15:0]
   };
 
   assign data_sram_en = |(es_store_op | es_load_op) & es_valid;
-  assign data_sram_we = es_store_op & (es_mem_size[0] ? es_stb_wen : es_mem_size[1] ? es_sth_wen : !es_mem_size ? 4'b1111 : 4'b0000) & es_valid;
+  assign data_sram_we = {4{es_store_op}} & (es_mem_size[0] ? es_stb_wen : es_mem_size[1] ? es_sth_wen : !es_mem_size ? 4'b1111 : 4'b0000);
   assign data_sram_addr = es_alu_result;
   assign data_sram_wdata = ({32{es_mem_size[0]}} & es_stb_cont) |
-                           ({32{es_mem_size[0]}} & es_sth_cont) |
+                           ({32{es_mem_size[1]}} & es_sth_cont) |
                            ({32{!es_mem_size}}   & es_rkd_value);
 
 endmodule
