@@ -160,9 +160,6 @@ module id_stage (
   wire                        rf1_ws_need_stall;
   wire                        rf2_ws_need_stall;
 
-
-
-
   assign ds_ready_go = ~(rf1_forward_stall || rf2_forward_stall);
   assign ds_allowin = !ds_valid || es_allowin && ds_ready_go;
   assign ds_to_es_valid = ds_valid && ds_ready_go;
@@ -410,7 +407,16 @@ module id_stage (
                   ({32{need_si26_pc}} & {{ 4{i26[25]}}, i26, 2'b0}) ;
 
 
-  assign src_reg_is_rd = inst_beq | inst_bne | inst_st_w;
+  assign src_reg_is_rd = inst_beq  |
+                       inst_bne    |
+                       inst_blt    |
+                       inst_bltu   |
+                       inst_bge    |
+                       inst_bgeu   |
+                       inst_st_b   |
+                       inst_st_h   |
+                       inst_st_w   ;
+
 
   assign src1_is_pc = inst_jirl | inst_bl | inst_pcaddu12i;
 
@@ -481,7 +487,7 @@ module id_stage (
   assign rj_lt_rd_sign = (rj_value[31] && ~rkd_value[31]) ? 1'b1 :
                          (~rj_value[31] && rkd_value[31]) ? 1'b0 : rj_lt_rd_unsign;
 
-  assign br_taken = (   inst_beq  &&  rj_eq_rd
+  assign br_taken = (  inst_beq  &&  rj_eq_rd
                     || inst_bne  && !rj_eq_rd
                     || inst_blt  &&  rj_lt_rd_sign
                     || inst_bge  && !rj_lt_rd_sign
