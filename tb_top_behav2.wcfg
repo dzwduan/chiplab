@@ -11,15 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="1343046584fs"></ZoomStartTime>
-      <ZoomEndTime time="1343131685fs"></ZoomEndTime>
-      <Cursor1Time time="1343061584fs"></Cursor1Time>
+      <ZoomStartTime time="1984750fs"></ZoomStartTime>
+      <ZoomEndTime time="2067051fs"></ZoomEndTime>
+      <Cursor1Time time="2056750fs"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="171"></NameColumnWidth>
-      <ValueColumnWidth column_width="86"></ValueColumnWidth>
+      <ValueColumnWidth column_width="82"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="29" />
+   <WVObjectSize size="24" />
    <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_if_stage/fs_valid">
       <obj_property name="ElementShortName">fs_valid</obj_property>
       <obj_property name="ObjectShortName">fs_valid</obj_property>
@@ -72,21 +72,9 @@
       <obj_property name="ElementShortName">es_pc[31:0]</obj_property>
       <obj_property name="ObjectShortName">es_pc[31:0]</obj_property>
    </wvobject>
-   <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_exe_stage/data_sram_en">
-      <obj_property name="ElementShortName">data_sram_en</obj_property>
-      <obj_property name="ObjectShortName">data_sram_en</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/tb_top/soc_lite/cpu/u_exe_stage/data_sram_we">
-      <obj_property name="ElementShortName">data_sram_we[3:0]</obj_property>
-      <obj_property name="ObjectShortName">data_sram_we[3:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/tb_top/soc_lite/cpu/u_exe_stage/es_mem_size">
-      <obj_property name="ElementShortName">es_mem_size[1:0]</obj_property>
-      <obj_property name="ObjectShortName">es_mem_size[1:0]</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_exe_stage/es_store_op">
-      <obj_property name="ElementShortName">es_store_op</obj_property>
-      <obj_property name="ObjectShortName">es_store_op</obj_property>
+   <wvobject type="array" fp_name="/tb_top/soc_lite/cpu/u_exe_stage/es_alu_result">
+      <obj_property name="ElementShortName">es_alu_result[31:0]</obj_property>
+      <obj_property name="ObjectShortName">es_alu_result[31:0]</obj_property>
    </wvobject>
    <wvobject fp_name="divider386" type="divider">
       <obj_property name="label">EX -&gt; MEM</obj_property>
@@ -104,17 +92,9 @@
       <obj_property name="ElementShortName">ms_final_result[31:0]</obj_property>
       <obj_property name="ObjectShortName">ms_final_result[31:0]</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/tb_top/soc_lite/cpu/u_mem_stage/mem_result">
-      <obj_property name="ElementShortName">mem_result[31:0]</obj_property>
-      <obj_property name="ObjectShortName">mem_result[31:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/tb_top/soc_lite/cpu/u_mem_stage/ms_mem_size">
-      <obj_property name="ElementShortName">ms_mem_size[1:0]</obj_property>
-      <obj_property name="ObjectShortName">ms_mem_size[1:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/tb_top/soc_lite/cpu/u_mem_stage/ms_rdata">
-      <obj_property name="ElementShortName">ms_rdata[31:0]</obj_property>
-      <obj_property name="ObjectShortName">ms_rdata[31:0]</obj_property>
+   <wvobject type="array" fp_name="/tb_top/soc_lite/cpu/u_mem_stage/ms_exe_result">
+      <obj_property name="ElementShortName">ms_exe_result[31:0]</obj_property>
+      <obj_property name="ObjectShortName">ms_exe_result[31:0]</obj_property>
    </wvobject>
    <wvobject fp_name="divider387" type="divider">
       <obj_property name="label">MEM -&gt; WB</obj_property>

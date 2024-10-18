@@ -21,8 +21,8 @@ module mem_stage (
     input  wire [                 31:0] mod_result,
     input  wire [                 63:0] mul_result,
     //excp
-    input                               excp_flush,
-    input                               ertn_flush
+    input  wire                         excp_flush,
+    input  wire                         ertn_flush
 );
 
   reg                           ms_valid;
@@ -51,7 +51,6 @@ module mem_stage (
   wire [                  13:0] ms_csr_idx;
   wire                          ms_inst_ertn;
   wire                          ms_excp;
-  wire [                  31:0] ms_result;
   wire [                  31:0] ms_csr_result;
   wire                          flush_sign;
 
@@ -84,7 +83,7 @@ module mem_stage (
       ms_load_op,  //70:70
       ms_gr_we,  //69:69
       ms_dest,  //68:64
-      ms_result,  //63:32
+      ms_exe_result,  //63:32
       ms_pc  //31:0c
       } = es_to_ms_bus_r;
 

@@ -53,6 +53,23 @@ module mycpu_top (
   wire [                 31:0] div_result;
   wire [                 31:0] mod_result;
   wire [                 63:0] mul_result;
+  wire [                 31:0] rd_csr_data;
+  wire [                 13:0] rd_csr_addr;
+  wire [                  1:0] csr_plv;
+  wire                         has_int;
+  wire [                 63:0] timer_64;
+  wire [                 31:0] csr_tid;
+  wire                         excp_flush;
+  wire                         ertn_flush;
+  wire [                 31:0] csr_era;
+  wire [                 31:0] csr_eentry;
+  wire [                  8:0] csr_esubcode;
+  wire [                  5:0] csr_ecode;
+  wire                         csr_wr_en;
+  wire [                 13:0] wr_csr_addr;
+  wire [                 31:0] wr_csr_data;
+  wire                         va_error;
+  wire [                 31:0] bad_va;
 
 
   if_stage u_if_stage (
@@ -64,6 +81,11 @@ module mycpu_top (
       .fs_to_ds_bus   (fs_to_ds_bus),
       // brbus
       .br_bus         (br_bus),
+      // exception
+      .excp_flush     (excp_flush),
+      .ertn_flush     (ertn_flush),
+      .csr_era        (csr_era),
+      .csr_eentry     (csr_eentry),
       // inst sram interface
       .inst_sram_en   (inst_sram_en),
       .inst_sram_we   (inst_sram_we),
@@ -74,28 +96,44 @@ module mycpu_top (
 
 
 
+
+
+
+
   id_stage u_id_stage (
       .clk                 (clk),
       .reset               (reset),
       //allowin
       .es_allowin          (es_allowin),
       .ds_allowin          (ds_allowin),
-      //from fs
+      //from fsF
       .fs_to_ds_valid      (fs_to_ds_valid),
       .fs_to_ds_bus        (fs_to_ds_bus),
       //to es
       .ds_to_es_valid      (ds_to_es_valid),
       .ds_to_es_bus        (ds_to_es_bus),
-      //forward bus
-      .es_to_ds_valid      (es_to_ds_valid),
-      .ms_to_ds_valid      (ms_to_ds_valid),
-      .ws_to_ds_valid      (ws_to_ds_valid),
-      .es_to_ds_forward_bus(es_to_ds_forward_bus),
-      .ms_to_ds_forward_bus(ms_to_ds_forward_bus),
       //to fs
       .br_bus              (br_bus),
       //to rf: for write back
-      .ws_to_rf_bus        (ws_to_rf_bus)
+      .ws_to_rf_bus        (ws_to_rf_bus),
+      //csr
+      .rd_csr_data         (rd_csr_data),
+      .rd_csr_addr         (rd_csr_addr),
+      .csr_plv             (csr_plv),
+      //interrupt
+      .has_int             (has_int),
+      //exception
+      .excp_flush          (excp_flush),
+      .ertn_flush          (ertn_flush),
+      //timer 64
+      .timer_64            (timer_64),
+      .csr_tid             (csr_tid),
+      // RAW hazard
+      .es_to_ds_forward_bus(es_to_ds_forward_bus),
+      .ms_to_ds_forward_bus(ms_to_ds_forward_bus),
+      .es_to_ds_valid      (es_to_ds_valid),
+      .ms_to_ds_valid      (ms_to_ds_valid),
+      .ws_to_ds_valid      (ws_to_ds_valid)
   );
 
   div u_div (
@@ -141,6 +179,9 @@ module mycpu_top (
       .es_rj_value         (es_rj_value),
       .es_rkd_value        (es_rkd_value),
       .div_complete        (div_complete),
+      // exception
+      .excp_flush          (excp_flush),
+      .ertn_flush          (ertn_flush),
       // to data sram
       .data_sram_en        (data_sram_en),
       .data_sram_we        (data_sram_we),
@@ -158,18 +199,23 @@ module mycpu_top (
       //from es
       .es_to_ms_valid      (es_to_ms_valid),
       .es_to_ms_bus        (es_to_ms_bus),
-      //to ds
-      .ms_to_ds_valid      (ms_to_ds_valid),
-      .ms_to_ds_forward_bus(ms_to_ds_forward_bus),
       //to ws
       .ms_to_ws_valid      (ms_to_ws_valid),
       .ms_to_ws_bus        (ms_to_ws_bus),
+      //to ds
+      .ms_to_ds_forward_bus(ms_to_ds_forward_bus),
+      .ms_to_ds_valid      (ms_to_ds_valid),
       .data_sram_rdata     (data_sram_rdata),
       //div mul
       .div_result          (div_result),
       .mod_result          (mod_result),
-      .mul_result          (mul_result)
+      .mul_result          (mul_result),
+      //excp
+      .excp_flush          (excp_flush),
+      .ertn_flush          (ertn_flush)
   );
+
+
 
 
   wb_stage u_wb_stage (
@@ -184,6 +230,18 @@ module mycpu_top (
       .ws_to_rf_bus     (ws_to_rf_bus),
       //to ds
       .ws_to_ds_valid   (ws_to_ds_valid),
+      //flush
+      .excp_flush       (excp_flush),
+      .ertn_flush       (ertn_flush),
+      //exception
+      .csr_era          (csr_era),
+      .csr_esubcode     (csr_esubcode),
+      .csr_ecode        (csr_ecode),
+      .csr_wr_en        (csr_wr_en),
+      .wr_csr_addr      (wr_csr_addr),
+      .wr_csr_data      (wr_csr_data),
+      .va_error         (va_error),
+      .bad_va           (bad_va),
       //trace debug interface
       .debug_wb_pc      (debug_wb_pc),
       .debug_wb_rf_we   (debug_wb_rf_we),

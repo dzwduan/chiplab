@@ -17,14 +17,14 @@ module wb_stage (
     output wire                         excp_flush,
     output wire                         ertn_flush,
     //exception
-    output      [                 31:0] csr_era,
-    output      [                  8:0] csr_esubcode,
-    output      [                  5:0] csr_ecode,
-    output                              csr_wr_en,
-    output      [                 13:0] wr_csr_addr,
-    output      [                 31:0] wr_csr_data,
-    output                              va_error,
-    output      [                 31:0] bad_va,
+    output wire [                 31:0] csr_era,
+    output wire [                  8:0] csr_esubcode,
+    output wire [                  5:0] csr_ecode,
+    output wire                         csr_wr_en,
+    output wire [                 13:0] wr_csr_addr,
+    output wire [                 31:0] wr_csr_data,
+    output wire                         va_error,
+    output wire [                 31:0] bad_va,
     //trace debug interface
     output wire [                 31:0] debug_wb_pc,
     output wire [                  3:0] debug_wb_rf_we,
@@ -53,7 +53,7 @@ module wb_stage (
   assign ws_allowin     = ~ws_valid || ws_ready_go;
   assign ws_to_ds_valid = ws_valid & ws_gr_we;
 
-  assign flush_sign = excp_flush | ertn_flush;
+  assign flush_sign     = excp_flush | ertn_flush;
 
   always @(posedge clk) begin
     if (reset | flush_sign) begin
@@ -88,7 +88,7 @@ module wb_stage (
   assign wr_csr_data = ws_csr_result;  // 被csrrwr/csrxchg 写入到csr的data
 
 
-/*
+  /*
 excp_num[0]  int     va_error = 0, badv = 0
         [1]  adef    va_error = 1, badv = ws_pc
         [2]  syscall va_error = 0, badv = 0
