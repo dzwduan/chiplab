@@ -58,7 +58,7 @@ module exe_stage (
   wire                         div_stall;
   wire [                  1:0] sram_addr_low2bit;
 
-  wire [                  8:0] es_excp_num;
+  wire [                  5:0] es_excp_num;
   wire                         es_csr_mask;
   wire                         es_csr_we;
   wire [                 13:0] es_csr_idx;
@@ -72,7 +72,7 @@ module exe_stage (
   wire                         flush_sign;
   wire                         excp_ale;
   wire                         excp;
-  wire [                  9:0] excp_num;
+  wire [                  6:0] excp_num;
   wire                         access_mem;
 
   assign {
@@ -100,7 +100,7 @@ module exe_stage (
       es_rj_value,  //95 :64
       es_rkd_value,  //63 :32
       es_pc  //31 :0
-      } = ds_to_es_bus_r;
+  } = ds_to_es_bus_r;
 
 
   assign es_to_ms_bus = {

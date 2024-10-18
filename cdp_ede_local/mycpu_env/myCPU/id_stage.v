@@ -154,7 +154,7 @@ module id_stage (
   wire [                31:0] csr_data;
   wire                        res_from_csr;
   wire                        excp;
-  wire [                 8:0] excp_num;
+  wire [                 5:0] excp_num;
   wire                        inst_valid;
   wire                        flush_sign;
   wire                        ds_excp;
@@ -644,7 +644,7 @@ module id_stage (
   assign csr_mask = inst_csrxchg;  // csr need mask
 
   assign excp     = excp_ipe | inst_syscall | inst_break | ds_excp | excp_ine | has_int; // 是否是异常指令
-  assign excp_num = {{3'b0}, excp_ipe, excp_ine, inst_break, inst_syscall, ds_excp_num, has_int}; //异常指令列表onehot
+  assign excp_num = {excp_ipe, excp_ine, inst_break, inst_syscall, ds_excp_num, has_int}; //异常指令列表onehot
   assign rd_csr_addr = csr_idx;
 
   assign br_bus = {br_taken, br_target};

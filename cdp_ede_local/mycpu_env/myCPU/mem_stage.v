@@ -21,8 +21,8 @@ module mem_stage (
     input  wire [                 31:0] mod_result,
     input  wire [                 63:0] mul_result,
     //excp
-    input excp_flush,
-    input ertn_flush
+    input                               excp_flush,
+    input                               ertn_flush
 );
 
   reg                           ms_valid;
@@ -46,15 +46,14 @@ module mem_stage (
   wire [                   7:0] mem_byteLoaded;
   wire [                  15:0] mem_halfLoaded;
   wire [                  31:0] ms_rdata;
-
-  wire [                   8:0] ms_excp_num;
+  wire [                   6:0] ms_excp_num;
   wire                          ms_csr_we;
   wire [                  13:0] ms_csr_idx;
   wire                          ms_inst_ertn;
   wire                          ms_excp;
   wire [                  31:0] ms_result;
   wire [                  31:0] ms_csr_result;
-  wire flush_sign;
+  wire                          flush_sign;
 
   assign ms_ready_go = 1'b1;
   assign ms_allowin = ~ms_valid || ms_ready_go && ws_allowin;
@@ -90,7 +89,7 @@ module mem_stage (
       } = es_to_ms_bus_r;
 
   assign ms_to_ws_bus = {
-    ms_excp_num,  //134:119
+    ms_excp_num,  //128:119
     ms_csr_we,  //118:118
     ms_csr_idx,  //117:104
     ms_csr_result,  //103:72
