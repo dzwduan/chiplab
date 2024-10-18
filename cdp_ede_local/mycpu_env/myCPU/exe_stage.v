@@ -69,7 +69,11 @@ module exe_stage (
   wire [                 31:0] es_result;
   wire [                 31:0] es_csr_result;
   wire [                 31:0] csr_mask_result;
-  wire flush_sign;
+  wire                         flush_sign;
+  wire                         excp_ale;
+  wire                         excp;
+  wire [                  9:0] excp_num;
+  wire                         access_mem;
 
   assign {
       es_excp_num,
@@ -101,12 +105,12 @@ module exe_stage (
 
   assign es_to_ms_bus = {
     es_mem_sign_exted,  //136
-    es_excp_num,  //135:126
+    excp_num,  //135:126
     es_csr_we,  //125:125
     es_csr_idx,  //124:111
     es_csr_result,  //110:79
     es_inst_ertn,  //78:78
-    es_excp,  //77:77
+    excp,  //77:77
     es_mem_size,  //76:75
     es_mul_div_op,  //74:71
     es_load_op,  //70:70
@@ -144,6 +148,15 @@ module exe_stage (
   assign csr_mask_result      = (es_rj_value & es_rkd_value) | (~es_rj_value & es_csr_data);
   // data for writing to rd
   assign es_csr_result        = es_csr_mask ? csr_mask_result : es_rkd_value;
+
+  assign access_mem = es_load_op | es_store_op;
+  // 检查地址对齐，b不需要考虑, h需要最低位为0， w需要最低两位为0
+  assign excp_ale = access_mem && (es_mem_size[0] & 1'b0) |
+                    (es_mem_size[1] & es_alu_result[0]) |
+                    ((!es_mem_size[0] & !es_mem_size[1]) & (es_alu_result[0] | es_alu_result[1]));
+
+  assign excp = es_excp | excp_ale;
+  assign excp_num = {excp_ale, es_excp_num};
 
   // forward path
   assign dest_zero            = (es_dest == 5'b0);
