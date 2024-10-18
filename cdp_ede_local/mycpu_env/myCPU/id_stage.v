@@ -16,6 +16,18 @@ module id_stage (
     output wire [`BR_BUS_WD       -1:0] br_bus,
     //to rf: for write back
     input  wire [`WS_TO_RF_BUS_WD -1:0] ws_to_rf_bus,
+    //csr
+    input  wire [                 31:0] rd_csr_data,
+    output wire [                 13:0] rd_csr_addr,
+    input  wire [                  1:0] csr_plv,
+    //interrupt
+    input  wire                         has_int,
+    //exception
+    input  wire                         excp_flush,
+    input  wire                         ertn_flush,
+    //timer 64
+    input  wire [                 63:0] timer_64,
+    input  wire [                 31:0] csr_tid,
     // RAW hazard
     input  wire [`ES_TO_DS_BUS_WD -1:0] es_to_ds_forward_bus,
     input  wire [`MS_TO_DS_BUS_WD -1:0] ms_to_ds_forward_bus,
@@ -36,6 +48,7 @@ module id_stage (
   wire [                 1:0] mem_size;
   wire                        dst_is_r1;
   wire                        gr_we;
+  wire                        dst_is_rj;
   wire                        src_reg_is_rd;
   wire                        rj_eq_rd;
   wire                        rj_lt_rd_unsign;
@@ -113,6 +126,15 @@ module id_stage (
   wire                        inst_div_wu;
   wire                        inst_mod_wu;
   wire                        inst_pcaddu12i;
+  wire                        inst_ertn;
+  wire                        inst_syscall;
+  wire                        inst_break;
+  wire                        inst_csrrd;
+  wire                        inst_csrwr;
+  wire                        inst_csrxchg;
+  wire                        inst_rdcntid_w;
+  wire                        inst_rdcntvl_w;
+  wire                        inst_rdcntvh_w;
 
   wire                        need_ui5;
   wire                        need_ui12;
@@ -122,12 +144,30 @@ module id_stage (
   wire                        need_si20_pc;
   wire                        need_si26_pc;
 
-
-
-
   wire                        mem_b_size;
   wire                        mem_h_size;
   wire                        mem_sign_exted;
+
+  wire                        csr_we;
+  wire                        csr_mask;
+  wire [                13:0] csr_idx;
+  wire [                31:0] csr_data;
+  wire                        res_from_csr;
+  wire                        excp;
+  wire [                 8:0] excp_num;
+  wire                        inst_valid;
+  wire                        flush_sign;
+  wire                        ds_excp;
+  wire                        ds_excp_num;
+  wire                        excp_ine;
+  wire                        excp_ipe;
+  wire                        kernel_inst;
+
+  wire [                31:0] rd_d;
+  wire [                31:0] rj_d;
+  wire [                31:0] rk_d;
+  wire [                31:0] rdcnt_result;
+  wire                        rdcnt_en;
 
   wire [                 4:0] rf_raddr1;
   wire [                31:0] rf_rdata1;
@@ -163,9 +203,10 @@ module id_stage (
   assign ds_ready_go = ~(rf1_forward_stall || rf2_forward_stall);
   assign ds_allowin = !ds_valid || es_allowin && ds_ready_go;
   assign ds_to_es_valid = ds_valid && ds_ready_go;
+  assign flush_sign = excp_flush | ertn_flush;
 
   always @(posedge clk) begin
-    if (reset || br_taken) begin
+    if (reset || br_taken || flush_sign) begin
       ds_valid <= 1'b0;
     end else if (ds_allowin) begin
       ds_valid <= fs_to_ds_valid;
@@ -176,7 +217,7 @@ module id_stage (
     end
   end
 
-  assign {ds_pc, ds_inst} = fs_to_ds_bus_r;
+  assign {ds_excp, ds_excp_num, ds_pc, ds_inst} = fs_to_ds_bus_r;
 
 
   assign op_31_26 = ds_inst[31:26];
@@ -210,6 +251,19 @@ module id_stage (
       .out(op_19_15_d)
   );
 
+  decoder_5_32 u_dec4 (
+      .in (rd),
+      .out(rd_d)
+  );
+  decoder_5_32 u_dec5 (
+      .in (rj),
+      .out(rj_d)
+  );
+  decoder_5_32 u_dec6 (
+      .in (rk),
+      .out(rk_d)
+  );
+
   assign inst_add_w = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h1] & op_19_15_d[5'h00];
   assign inst_sub_w = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h1] & op_19_15_d[5'h02];
   assign inst_slt = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h1] & op_19_15_d[5'h04];
@@ -233,6 +287,8 @@ module id_stage (
   assign inst_mod_w = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h2] & op_19_15_d[5'h01];
   assign inst_div_wu = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h2] & op_19_15_d[5'h02];
   assign inst_mod_wu = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h2] & op_19_15_d[5'h03];
+  assign inst_break = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h2] & op_19_15_d[5'h14];
+  assign inst_syscall = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h2] & op_19_15_d[5'h16];
 
   assign inst_slti = op_31_26_d[6'h00] & op_25_22_d[4'h8];
   assign inst_sltui = op_31_26_d[6'h00] & op_25_22_d[4'h9];
@@ -262,6 +318,15 @@ module id_stage (
   assign inst_lu12i_w = op_31_26_d[6'h05] & ~ds_inst[25];
   assign inst_pcaddu12i = op_31_26_d[6'h07] & ~ds_inst[25];
 
+  assign inst_csrrd = op_31_26_d[6'h01] & ~ds_inst[25] & ~ds_inst[24] & rj_d[5'h00];
+  assign inst_csrwr = op_31_26_d[6'h01] & ~ds_inst[25] & ~ds_inst[24] & rj_d[5'h01];
+  assign inst_csrxchg    = op_31_26_d[6'h01] & ~ds_inst[25] & ~ds_inst[24] & (~rj_d[5'h00] & ~rj_d[5'h01]);  //rj != 0,1
+  assign inst_ertn       = op_31_26_d[6'h01] & op_25_22_d[4'h9] & op_21_20_d[2'h0] & op_19_15_d[5'h10] & rk_d[5'h0e] & rj_d[5'h00] & rd_d[5'h00];
+  assign inst_rdcntid_w  = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h0] & op_19_15_d[5'h00] & rk_d[5'h18] & rd_d[5'h00];
+  assign inst_rdcntvl_w  = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h0] & op_19_15_d[5'h00] & rk_d[5'h18] & rj_d[5'h00] & !rd_d[5'h00];
+  assign inst_rdcntvh_w  = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h0] & op_19_15_d[5'h00] & rk_d[5'h19] & rj_d[5'h00];
+
+
   assign alu_op[0] =inst_add_w      |
                     inst_addi_w     |
                     inst_ld_b       |
@@ -275,8 +340,6 @@ module id_stage (
                     inst_jirl       |
                     inst_bl         |
                     inst_pcaddu12i;
-
-
 
   assign alu_op[1] = inst_sub_w;
   assign alu_op[2] = inst_slt | inst_slti;
@@ -294,10 +357,10 @@ module id_stage (
   assign mul_div_op[1] = inst_mulh_w | inst_mulh_wu;
   assign mul_div_op[2] = inst_div_w | inst_div_wu;
   assign mul_div_op[3] = inst_mod_w | inst_mod_wu;
-
   assign mul_div_sign = inst_mul_w | inst_mulh_w | inst_div_w | inst_mod_w;
 
-  assign inst_need_rj  =  inst_add_w      |
+  // rdcntid_w 由于将rj作为dest，不能放在这里
+  assign inst_need_rj  =  inst_add_w    |
                         inst_sub_w      |
                         inst_addi_w     |
                         inst_slt        |
@@ -338,7 +401,8 @@ module id_stage (
                         inst_ld_w       |
                         inst_st_b       |
                         inst_st_h       |
-                        inst_st_w;
+                        inst_st_w       |
+                        inst_csrxchg    ;
 
 
   assign inst_need_rkd = inst_add_w   |
@@ -367,7 +431,9 @@ module id_stage (
                        inst_bgeu    |
                        inst_st_b    |
                        inst_st_h    |
-                       inst_st_w    ;
+                       inst_st_w    |
+                       inst_csrwr   |
+                       inst_csrxchg ;
 
 
   //TODO: dont care pcaddi
@@ -459,9 +525,71 @@ module id_stage (
                        ~inst_bge        &
                        ~inst_bltu       &
                        ~inst_bgeu       &
-                       ~inst_b          ;
+                       ~inst_b          &
+                       ~inst_syscall    ;
 
-  assign dest = dst_is_r1 ? 5'd1 : rd;
+  assign inst_valid =  inst_add_w      |
+                       inst_sub_w      |
+                       inst_slt        |
+                       inst_sltu       |
+                       inst_nor        |
+                       inst_and        |
+                       inst_or         |
+                       inst_xor        |
+                       inst_sll_w      |
+                       inst_srl_w      |
+                       inst_sra_w      |
+                       inst_mul_w      |
+                       inst_mulh_w     |
+                       inst_mulh_wu    |
+                       inst_div_w      |
+                       inst_mod_w      |
+                       inst_div_wu     |
+                       inst_mod_wu     |
+                       inst_break      |
+                       inst_syscall    |
+                       inst_slli_w     |
+                       inst_srli_w     |
+                       inst_srai_w     |
+                       inst_slti       |
+                       inst_sltui      |
+                       inst_addi_w     |
+                       inst_andi       |
+                       inst_ori        |
+                       inst_xori       |
+                       inst_ld_b       |
+                       inst_ld_h       |
+                       inst_ld_w       |
+                       inst_st_b       |
+                       inst_st_h       |
+                       inst_st_w       |
+                       inst_ld_bu      |
+                       inst_ld_hu      |
+                       inst_jirl       |
+                       inst_b          |
+                       inst_bl         |
+                       inst_beq        |
+                       inst_bne        |
+                       inst_blt        |
+                       inst_bge        |
+                       inst_bltu       |
+                       inst_bgeu       |
+                       inst_lu12i_w    |
+                       inst_pcaddu12i  |
+                       inst_csrrd      |
+                       inst_csrwr      |
+                       inst_csrxchg    |
+                       inst_rdcntid_w  |
+                       inst_rdcntvh_w  |
+                       inst_rdcntvl_w  |
+                       inst_ertn       ;
+
+  assign kernel_inst = inst_csrrd | inst_csrwr | inst_csrxchg | inst_ertn;
+  assign excp_ipe = (csr_plv == 2'b11) && kernel_inst;  // 仅有PLV0 核心态，PLV3用户态
+
+
+  assign dst_is_rj = inst_rdcntid_w;
+  assign dest = dst_is_r1 ? 5'd1 : dst_is_rj ? rj : rd;
 
   assign rf_raddr1 = rj;
   assign rf_raddr2 = src_reg_is_rd ? rd : rk;
@@ -504,10 +632,32 @@ module id_stage (
                           inst_blt || inst_bge || inst_bltu || inst_bgeu}} & (ds_pc + ds_imm   )) |
                      ({32{inst_jirl}}                                      & (rj_value + ds_imm)) ;
 
+  assign {rdcnt_en, rdcnt_result} = ({33{inst_rdcntvh_w}} & {1'b1, timer_64[63:32]}) |
+                                    ({33{inst_rdcntvl_w}} & {1'b1, timer_64[31:0]}) |
+                                    ({33{inst_rdcntid_w}} & {1'b1, csr_tid}) ;
+
+  assign excp_ine = ~inst_valid;
+  assign csr_data = rdcnt_en ? rdcnt_result : rd_csr_data;
+  assign csr_idx = ds_inst[23:10];
+  assign res_from_csr = inst_csrrd | inst_csrwr | inst_csrxchg | inst_rdcntid_w | inst_rdcntvh_w | inst_rdcntvl_w;
+  assign csr_we = inst_csrwr | inst_csrxchg;
+  assign csr_mask = inst_csrxchg;  // csr need mask
+
+  assign excp     = excp_ipe | inst_syscall | inst_break | ds_excp | excp_ine | has_int; // 是否是异常指令
+  assign excp_num = {{3'b0}, excp_ipe, excp_ine, inst_break, inst_syscall, ds_excp_num, has_int}; //异常指令列表onehot
+  assign rd_csr_addr = csr_idx;
 
   assign br_bus = {br_taken, br_target};
 
   assign ds_to_es_bus = {
+    excp_num,  // 210:210
+    csr_mask,  // 209
+    csr_we,  // 208
+    csr_idx,  //   207:194
+    res_from_csr,  //  193
+    csr_data,  //  192:161
+    inst_ertn,  // 160
+    excp,  // 159:159
     mem_sign_exted,  //158:158
     mem_size,  //157:156
     mul_div_op,  //155:152

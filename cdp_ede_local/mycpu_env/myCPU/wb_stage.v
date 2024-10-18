@@ -12,6 +12,9 @@ module wb_stage (
     output wire [`WS_TO_RF_BUS_WD -1:0] ws_to_rf_bus,
     //to ds
     output wire                         ws_to_ds_valid,
+    //flush
+    output wire                         excp_flush,
+    output wire                         ertn_flush,
     //trace debug interface
     output wire [                 31:0] debug_wb_pc,
     output wire [                  3:0] debug_wb_rf_we,
@@ -26,6 +29,14 @@ module wb_stage (
   wire [                 4:0] ws_dest;
   wire [                31:0] ws_final_result;
   wire [                31:0] ws_pc;
+  wire [                 8:0] ws_excp_num;
+  wire                        ws_csr_we;
+  wire [                13:0] ws_csr_idx;
+  wire                        ws_inst_ertn;
+  wire                        ws_excp;
+  wire [                31:0] ws_result;
+  wire [                31:0] ws_csr_result;
+
 
   assign ws_ready_go    = 1'b1;
   assign ws_allowin     = ~ws_valid || ws_ready_go;
@@ -44,11 +55,20 @@ module wb_stage (
   end
 
 
-  assign {ws_gr_we,  //69:69
+  assign {ws_excp_num,  //134:119
+      ws_csr_we,  //118:118
+      ws_csr_idx,  //117:104
+      ws_csr_result,  //103:72
+      ws_inst_ertn,  //71:71
+      ws_excp,  //70:70
+      ws_gr_we,  //69:69
       ws_dest,  //68:64
       ws_final_result,  //63:32
-      ws_pc  //31:0
-      } = ms_to_ws_bus_r;
+      ws_pc} = ms_to_ws_bus_r;
+
+
+  assign excp_flush = ws_excp & ws_valid;
+  assign ertn_flush = ws_inst_ertn & ws_valid; //TODO: if both excp ans etrn ?
 
   assign ws_to_rf_bus = {ws_gr_we, ws_dest, ws_final_result};
 

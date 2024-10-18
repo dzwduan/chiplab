@@ -9,6 +9,11 @@ module if_stage (
     output wire [`FS_TO_DS_BUS_WD-1:0] fs_to_ds_bus,
     // brbus
     input  wire [      `BR_BUS_WD-1:0] br_bus,
+    // exception
+    input  wire                        excp_flush,
+    input  wire                        ertn_flush,
+    input  wire [                31:0] csr_era,
+    input  wire [                31:0] csr_eentry,
     // inst sram interface
     output wire                        inst_sram_en,
     output wire [                 3:0] inst_sram_we,
@@ -28,13 +33,38 @@ module if_stage (
 
   wire [31:0] fs_inst;
   reg  [31:0] fs_pc;
+  reg         fs_excp;
+  reg         fs_excp_num;
 
   wire [31:0] br_target;
   wire        br_taken;
+  wire        pfs_excp_adef;
+  wire        pfs_excp;
+  wire        pfs_excp_num;
+  wire        flush_sign;
+  wire [31:0] excp_pc;
+  wire [31:0] ertn_pc;
+  wire        excp_num;  //TODO: 需要拓展到多位
+  wire        excp;
+
 
 
   assign {br_taken, br_target} = br_bus;
-  assign fs_to_ds_bus = {fs_pc, fs_inst};
+  assign fs_to_ds_bus = {
+    excp,
+    excp_num,
+    fs_pc,
+    fs_inst
+  };
+
+
+  assign flush_sign = excp_flush | ertn_flush;
+  assign pfs_excp_adef = nextpc[1] | nextpc[0];
+  assign pfs_excp = pfs_excp_adef;
+  assign pfs_excp_num = {pfs_excp_adef};
+  assign excp_pc = csr_eentry; // 中断的入口地址
+  assign ertn_pc = csr_era;    // 例外的返回地址
+
 
   /**
   主要包括各阶段的 valid、readygo、allowin.
@@ -47,25 +77,30 @@ module if_stage (
   assign pfs_ready_go = 1'b1;  //TODO: add分支预测失效
   assign to_fs_valid = ~reset && pfs_ready_go;
   assign seq_pc = fs_pc + 32'h4;
-  assign nextpc = br_taken ? br_target : seq_pc;  //TODO: add flush
+  assign nextpc = excp_flush ? excp_pc :
+                  ertn_flush ? ertn_pc :
+                  br_taken   ? br_target :
+                               seq_pc;
 
+  // prf -> fs pipeline
   always @(posedge clk) begin
     if (reset) begin
-      fs_valid <= 1'b0;
-    end else if (fs_allowin) begin
-      fs_valid <= to_fs_valid;
-      // end else if (br_taken) begin
-      //   fs_valid <= 1'b0;
+      fs_valid    <= 1'b0;
+      fs_pc       <= 32'h1bfffffc;  //trick: to make nextpc be 0x1c000000 during reset
+      fs_excp     <= 1'b0;
+      fs_excp_num <= 1'b0;
+    end
+    else if (flush_sign) begin
+      fs_valid    <= 1'b0;
+    end
+    else if (to_fs_valid && fs_allowin) begin
+      fs_valid    <= to_fs_valid;
+      fs_excp     <= pfs_excp;
+      fs_excp_num <= pfs_excp_num;
+      fs_pc       <= nextpc;
     end
   end
 
-  always @(posedge clk) begin
-    if (reset) begin
-      fs_pc <= 32'h1bfffffc;  //trick: to make nextpc be 0x1c000000 during reset
-    end else if (to_fs_valid && fs_allowin) begin
-      fs_pc <= nextpc;
-    end
-  end
 
   assign fs_ready_go     = 1'b1;
   assign fs_allowin      = !fs_valid || fs_ready_go && ds_allowin;

@@ -19,7 +19,10 @@ module mem_stage (
     //div mul
     input  wire [                 31:0] div_result,
     input  wire [                 31:0] mod_result,
-    input  wire [                 63:0] mul_result
+    input  wire [                 63:0] mul_result,
+    //excp
+    input excp_flush,
+    input ertn_flush
 );
 
   reg                           ms_valid;
@@ -44,12 +47,22 @@ module mem_stage (
   wire [                  15:0] mem_halfLoaded;
   wire [                  31:0] ms_rdata;
 
+  wire [                   8:0] ms_excp_num;
+  wire                          ms_csr_we;
+  wire [                  13:0] ms_csr_idx;
+  wire                          ms_inst_ertn;
+  wire                          ms_excp;
+  wire [                  31:0] ms_result;
+  wire [                  31:0] ms_csr_result;
+  wire flush_sign;
+
   assign ms_ready_go = 1'b1;
   assign ms_allowin = ~ms_valid || ms_ready_go && ws_allowin;
   assign ms_to_ws_valid = ms_valid && ms_ready_go;
+  assign flush_sign = excp_flush | ertn_flush;
 
   always @(posedge clk) begin
-    if (reset) begin
+    if (reset | flush_sign) begin
       ms_valid <= 1'b0;
     end else if (ms_allowin) begin
       ms_valid <= es_to_ms_valid;
@@ -60,16 +73,29 @@ module mem_stage (
     end
   end
 
-  assign {ms_mem_sign_exted,  //77:77
+  assign {ms_mem_sign_exted,  //136
+      ms_excp_num,  //135:126
+      ms_csr_we,  //125:125
+      ms_csr_idx,  //124:111
+      ms_csr_result,  //110:79
+      ms_inst_ertn,  //78:78
+      ms_excp,  //77:77
       ms_mem_size,  //76:75
       ms_mul_div_op,  //74:71
       ms_load_op,  //70:70
       ms_gr_we,  //69:69
       ms_dest,  //68:64
-      ms_exe_result,  //63:32
-      ms_pc} = es_to_ms_bus_r;
+      ms_result,  //63:32
+      ms_pc  //31:0c
+      } = es_to_ms_bus_r;
 
   assign ms_to_ws_bus = {
+    ms_excp_num,  //134:119
+    ms_csr_we,  //118:118
+    ms_csr_idx,  //117:104
+    ms_csr_result,  //103:72
+    ms_inst_ertn,  //71:71
+    ms_excp,  //70:70
     ms_gr_we,  //69:69
     ms_dest,  //68:64
     ms_final_result,  //63:32

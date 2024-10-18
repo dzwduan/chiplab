@@ -21,6 +21,9 @@ module exe_stage (
     output wire [                 31:0] es_rj_value,
     output wire [                 31:0] es_rkd_value,
     input  wire                         div_complete,
+    // exception
+    input  wire                         excp_flush,
+    input  wire                         ertn_flush,
     // to data sram
     output wire                         data_sram_en,
     output wire [                  3:0] data_sram_we,
@@ -55,8 +58,29 @@ module exe_stage (
   wire                         div_stall;
   wire [                  1:0] sram_addr_low2bit;
 
+  wire [                  8:0] es_excp_num;
+  wire                         es_csr_mask;
+  wire                         es_csr_we;
+  wire [                 13:0] es_csr_idx;
+  wire                         es_res_from_csr;
+  wire [                 31:0] es_csr_data;
+  wire                         es_inst_ertn;
+  wire                         es_excp;
+  wire [                 31:0] es_result;
+  wire [                 31:0] es_csr_result;
+  wire [                 31:0] csr_mask_result;
+  wire flush_sign;
 
-  assign {es_mem_sign_exted,  //160:160
+  assign {
+      es_excp_num,
+      es_csr_mask,
+      es_csr_we,
+      es_csr_idx,
+      es_res_from_csr,
+      es_csr_data,
+      es_inst_ertn,
+      es_excp,
+      es_mem_sign_exted,  //160:160
       es_mem_size,  //159:158
       es_mul_div_op,  //157:154
       es_mul_div_sign,  //153:153
@@ -76,23 +100,31 @@ module exe_stage (
 
 
   assign es_to_ms_bus = {
-    es_mem_sign_exted,  //77:77
+    es_mem_sign_exted,  //136
+    es_excp_num,  //135:126
+    es_csr_we,  //125:125
+    es_csr_idx,  //124:111
+    es_csr_result,  //110:79
+    es_inst_ertn,  //78:78
+    es_excp,  //77:77
     es_mem_size,  //76:75
     es_mul_div_op,  //74:71
     es_load_op,  //70:70
     es_gr_we,  //69:69
     es_dest,  //68:64
-    es_alu_result,  //63:32
+    es_result,  //63:32
     es_pc  //31:0
   };
+
 
 
   assign es_ready_go = !div_stall;  // 没算完div，stall
   assign es_allowin = !es_valid || (es_ready_go && ms_allowin);
   assign es_to_ms_valid = es_valid && es_ready_go;
+  assign flush_sign = excp_flush | ertn_flush;
 
   always @(posedge clk) begin
-    if (reset) begin
+    if (reset | flush_sign) begin
       es_valid <= 1'b0;
     end else if (es_allowin) begin
       es_valid <= ds_to_es_valid;
@@ -107,12 +139,17 @@ module exe_stage (
   assign es_mul_enable        = es_mul_div_op[0] | es_mul_div_op[1];
   assign div_stall            = es_div_enable & ~div_complete;
 
+  assign es_result            = es_res_from_csr ? es_csr_data : es_alu_result;
+  // handle csrxchg, rj is mask, rd is old_value, csr_data for update
+  assign csr_mask_result      = (es_rj_value & es_rkd_value) | (~es_rj_value & es_csr_data);
+  // data for writing to rd
+  assign es_csr_result        = es_csr_mask ? csr_mask_result : es_rkd_value;
 
   // forward path
   assign dest_zero            = (es_dest == 5'b0);
   assign forward_enable       = es_valid & es_gr_we & !dest_zero;
   assign dep_need_stall       = es_load_op | es_div_enable | es_mul_enable;
-  assign es_to_ds_forward_bus = {dep_need_stall, forward_enable, es_dest, es_alu_result};
+  assign es_to_ds_forward_bus = {dep_need_stall, forward_enable, es_dest, es_result};
   assign es_to_ds_valid       = es_valid;
 
   alu u_alu (
@@ -147,7 +184,7 @@ module exe_stage (
   };
 
   wire [31:0] es_stb_cont = {
-    {8{es_stb_wen[3]}} & es_rkd_value[7:0], `
+    {8{es_stb_wen[3]}} & es_rkd_value[7:0],
     {8{es_stb_wen[2]}} & es_rkd_value[7:0],
     {8{es_stb_wen[1]}} & es_rkd_value[7:0],
     {8{es_stb_wen[0]}} & es_rkd_value[7:0]
