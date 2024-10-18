@@ -11,15 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="1984750fs"></ZoomStartTime>
-      <ZoomEndTime time="2067051fs"></ZoomEndTime>
-      <Cursor1Time time="2056750fs"></Cursor1Time>
+      <ZoomStartTime time="2037316fs"></ZoomStartTime>
+      <ZoomEndTime time="2123217fs"></ZoomEndTime>
+      <Cursor1Time time="2065916fs"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="171"></NameColumnWidth>
-      <ValueColumnWidth column_width="82"></ValueColumnWidth>
+      <ValueColumnWidth column_width="78"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="24" />
+   <WVObjectSize size="33" />
    <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_if_stage/fs_valid">
       <obj_property name="ElementShortName">fs_valid</obj_property>
       <obj_property name="ObjectShortName">fs_valid</obj_property>
@@ -27,6 +27,22 @@
    <wvobject type="array" fp_name="/tb_top/soc_lite/cpu/u_if_stage/fs_pc">
       <obj_property name="ElementShortName">fs_pc[31:0]</obj_property>
       <obj_property name="ObjectShortName">fs_pc[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_top/soc_lite/cpu/u_if_stage/nextpc">
+      <obj_property name="ElementShortName">nextpc[31:0]</obj_property>
+      <obj_property name="ObjectShortName">nextpc[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_if_stage/excp_flush">
+      <obj_property name="ElementShortName">excp_flush</obj_property>
+      <obj_property name="ObjectShortName">excp_flush</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_if_stage/ertn_flush">
+      <obj_property name="ElementShortName">ertn_flush</obj_property>
+      <obj_property name="ObjectShortName">ertn_flush</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_if_stage/excp">
+      <obj_property name="ElementShortName">excp</obj_property>
+      <obj_property name="ObjectShortName">excp</obj_property>
    </wvobject>
    <wvobject fp_name="divider384" type="divider">
       <obj_property name="label">IF -&gt; ID</obj_property>
@@ -44,6 +60,10 @@
       <obj_property name="ElementShortName">br_taken</obj_property>
       <obj_property name="ObjectShortName">br_taken</obj_property>
    </wvobject>
+   <wvobject type="array" fp_name="/tb_top/soc_lite/cpu/u_id_stage/ds_imm">
+      <obj_property name="ElementShortName">ds_imm[31:0]</obj_property>
+      <obj_property name="ObjectShortName">ds_imm[31:0]</obj_property>
+   </wvobject>
    <wvobject type="array" fp_name="/tb_top/soc_lite/cpu/u_id_stage/rj_value">
       <obj_property name="ElementShortName">rj_value[31:0]</obj_property>
       <obj_property name="ObjectShortName">rj_value[31:0]</obj_property>
@@ -60,6 +80,10 @@
       <obj_property name="ElementShortName">rf_raddr2[4:0]</obj_property>
       <obj_property name="ObjectShortName">rf_raddr2[4:0]</obj_property>
    </wvobject>
+   <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_id_stage/excp">
+      <obj_property name="ElementShortName">excp</obj_property>
+      <obj_property name="ObjectShortName">excp</obj_property>
+   </wvobject>
    <wvobject fp_name="divider385" type="divider">
       <obj_property name="label">ID -&gt; EX</obj_property>
       <obj_property name="DisplayName">label</obj_property>
@@ -75,6 +99,10 @@
    <wvobject type="array" fp_name="/tb_top/soc_lite/cpu/u_exe_stage/es_alu_result">
       <obj_property name="ElementShortName">es_alu_result[31:0]</obj_property>
       <obj_property name="ObjectShortName">es_alu_result[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_exe_stage/es_excp">
+      <obj_property name="ElementShortName">es_excp</obj_property>
+      <obj_property name="ObjectShortName">es_excp</obj_property>
    </wvobject>
    <wvobject fp_name="divider386" type="divider">
       <obj_property name="label">EX -&gt; MEM</obj_property>
@@ -96,6 +124,10 @@
       <obj_property name="ElementShortName">ms_exe_result[31:0]</obj_property>
       <obj_property name="ObjectShortName">ms_exe_result[31:0]</obj_property>
    </wvobject>
+   <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_mem_stage/ms_excp">
+      <obj_property name="ElementShortName">ms_excp</obj_property>
+      <obj_property name="ObjectShortName">ms_excp</obj_property>
+   </wvobject>
    <wvobject fp_name="divider387" type="divider">
       <obj_property name="label">MEM -&gt; WB</obj_property>
       <obj_property name="DisplayName">label</obj_property>
@@ -115,5 +147,9 @@
    <wvobject type="array" fp_name="/tb_top/ref_wb_pc">
       <obj_property name="ElementShortName">ref_wb_pc[31:0]</obj_property>
       <obj_property name="ObjectShortName">ref_wb_pc[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_wb_stage/ws_excp">
+      <obj_property name="ElementShortName">ws_excp</obj_property>
+      <obj_property name="ObjectShortName">ws_excp</obj_property>
    </wvobject>
 </wave_config>

@@ -64,6 +64,8 @@ module if_stage (
   assign pfs_excp_num = {pfs_excp_adef};
   assign excp_pc = csr_eentry; // 中断的入口地址
   assign ertn_pc = csr_era;    // 例外的返回地址
+  assign excp = fs_excp;
+  assign excp_num = fs_excp_num;
 
 
   /**
