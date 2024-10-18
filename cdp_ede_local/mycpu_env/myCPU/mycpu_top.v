@@ -268,8 +268,8 @@ module mycpu_top (
       .ertn_flush (ertn_flush),
       .era_in     (era_in),
       .esubcode_in(esubcode_in),
-      .ecode_in   (ecode_in),
-      .interrupt  (interrupt)     // input wire [7:0] interrupt
+      .ecode_in   (ecode_in)
+    //   .interrupt  (interrupt)     // input wire [7:0] interrupt
   );
 
 

@@ -11,15 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="2037316fs"></ZoomStartTime>
-      <ZoomEndTime time="2123217fs"></ZoomEndTime>
-      <Cursor1Time time="2065916fs"></Cursor1Time>
+      <ZoomStartTime time="1366939303fs"></ZoomStartTime>
+      <ZoomEndTime time="1367026004fs"></ZoomEndTime>
+      <Cursor1Time time="1367015000fs"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="171"></NameColumnWidth>
-      <ValueColumnWidth column_width="78"></ValueColumnWidth>
+      <ValueColumnWidth column_width="70"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="33" />
+   <WVObjectSize size="30" />
    <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_if_stage/fs_valid">
       <obj_property name="ElementShortName">fs_valid</obj_property>
       <obj_property name="ObjectShortName">fs_valid</obj_property>
@@ -56,33 +56,22 @@
       <obj_property name="ElementShortName">ds_pc[31:0]</obj_property>
       <obj_property name="ObjectShortName">ds_pc[31:0]</obj_property>
    </wvobject>
-   <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_id_stage/br_taken">
-      <obj_property name="ElementShortName">br_taken</obj_property>
-      <obj_property name="ObjectShortName">br_taken</obj_property>
+   <wvobject type="array" fp_name="/tb_top/soc_lite/cpu/u_id_stage/rd_csr_addr">
+      <obj_property name="ElementShortName">rd_csr_addr[13:0]</obj_property>
+      <obj_property name="ObjectShortName">rd_csr_addr[13:0]</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/tb_top/soc_lite/cpu/u_id_stage/ds_imm">
-      <obj_property name="ElementShortName">ds_imm[31:0]</obj_property>
-      <obj_property name="ObjectShortName">ds_imm[31:0]</obj_property>
+   <wvobject type="array" fp_name="/tb_top/soc_lite/cpu/u_id_stage/rd_csr_data">
+      <obj_property name="ElementShortName">rd_csr_data[31:0]</obj_property>
+      <obj_property name="ObjectShortName">rd_csr_data[31:0]</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/tb_top/soc_lite/cpu/u_id_stage/rj_value">
-      <obj_property name="ElementShortName">rj_value[31:0]</obj_property>
-      <obj_property name="ObjectShortName">rj_value[31:0]</obj_property>
+   <wvobject type="array" fp_name="/tb_top/soc_lite/cpu/u_csr/rd_data">
+      <obj_property name="ElementShortName">rd_data[31:0]</obj_property>
+      <obj_property name="ObjectShortName">rd_data[31:0]</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/tb_top/soc_lite/cpu/u_id_stage/rkd_value">
-      <obj_property name="ElementShortName">rkd_value[31:0]</obj_property>
-      <obj_property name="ObjectShortName">rkd_value[31:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/tb_top/soc_lite/cpu/u_id_stage/rf_raddr1">
-      <obj_property name="ElementShortName">rf_raddr1[4:0]</obj_property>
-      <obj_property name="ObjectShortName">rf_raddr1[4:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/tb_top/soc_lite/cpu/u_id_stage/rf_raddr2">
-      <obj_property name="ElementShortName">rf_raddr2[4:0]</obj_property>
-      <obj_property name="ObjectShortName">rf_raddr2[4:0]</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_id_stage/excp">
-      <obj_property name="ElementShortName">excp</obj_property>
-      <obj_property name="ObjectShortName">excp</obj_property>
+   <wvobject type="array" fp_name="/tb_top/soc_lite/cpu/u_csr/csr_eentry">
+      <obj_property name="ElementShortName">csr_eentry[31:0]</obj_property>
+      <obj_property name="ObjectShortName">csr_eentry[31:0]</obj_property>
+      <obj_property name="isExpanded"></obj_property>
    </wvobject>
    <wvobject fp_name="divider385" type="divider">
       <obj_property name="label">ID -&gt; EX</obj_property>
