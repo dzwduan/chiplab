@@ -77,6 +77,8 @@ module mycpu_top (
   wire [                 31:0] era_in;
   wire [                  8:0] esubcode_in;
   wire [                  5:0] ecode_in;
+  wire [                 31:0] eentry_out;
+  wire [                 31:0] era_out;
 
   if_stage u_if_stage (
       .clk            (clk),
@@ -90,8 +92,8 @@ module mycpu_top (
       // exception
       .excp_flush     (excp_flush),
       .ertn_flush     (ertn_flush),
-      .csr_era        (csr_era),
-      .csr_eentry     (csr_eentry),
+      .csr_era        (era_out),
+      .csr_eentry     (eentry_out),
       // inst sram interface
       .inst_sram_en   (inst_sram_en),
       .inst_sram_we   (inst_sram_we),
@@ -252,24 +254,31 @@ module mycpu_top (
   );
 
 
-
+// 端口名与wb对齐
   csr u_csr (
       .clk        (clk),
       .reset      (reset),
       // from to ds
-      .rd_addr    (rd_addr),
-      .rd_data    (rd_data),
+      .csr_plv    (csr_plv),
+      .rd_addr    (rd_csr_addr),
+      .rd_data    (rd_csr_data),
       .has_int    (has_int),
-      // from ws
-      .csr_wr_en  (csr_wr_en),
-      .wr_addr    (wr_addr),
-      .wr_data    (wr_data),
+      // flush
       .excp_flush (excp_flush),
       .ertn_flush (ertn_flush),
-      .era_in     (era_in),
-      .esubcode_in(esubcode_in),
-      .ecode_in   (ecode_in)
-    //   .interrupt  (interrupt)     // input wire [7:0] interrupt
+      // from ws
+      .csr_wr_en  (csr_wr_en),
+      .wr_addr    (wr_csr_addr),
+      .wr_data    (wr_csr_data),
+      .era_in     (csr_era),
+      .esubcode_in(csr_esubcode),
+      .ecode_in   (csr_ecode),
+      .va_error_in (va_error),
+      .bad_va_in  (bad_va),
+      // to fetch
+      .eentry_out (eentry_out),
+      .era_out    (era_out)
+ 
   );
 
 

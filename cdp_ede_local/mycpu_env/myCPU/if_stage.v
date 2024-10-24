@@ -12,6 +12,7 @@ module if_stage (
     // exception
     input  wire                        excp_flush,
     input  wire                        ertn_flush,
+    // from csr
     input  wire [                31:0] csr_era,
     input  wire [                31:0] csr_eentry,
     // inst sram interface
@@ -50,20 +51,15 @@ module if_stage (
 
 
   assign {br_taken, br_target} = br_bus;
-  assign fs_to_ds_bus = {
-    excp,
-    excp_num,
-    fs_pc,
-    fs_inst
-  };
+  assign fs_to_ds_bus = {excp, excp_num, fs_pc, fs_inst};
 
 
   assign flush_sign = excp_flush | ertn_flush;
   assign pfs_excp_adef = nextpc[1] | nextpc[0];
   assign pfs_excp = pfs_excp_adef;
   assign pfs_excp_num = {pfs_excp_adef};
-  assign excp_pc = csr_eentry; // 中断的入口地址
-  assign ertn_pc = csr_era;    // 例外的返回地址
+  assign excp_pc = csr_eentry;  // 中断的入口地址
+  assign ertn_pc = csr_era;  // 例外的返回地址
   assign excp = fs_excp;
   assign excp_num = fs_excp_num;
 
@@ -76,13 +72,16 @@ module if_stage (
   */
 
 
-  assign pfs_ready_go = 1'b1;  //TODO: add分支预测失效
+  assign pfs_ready_go = 1'b1;
   assign to_fs_valid = ~reset && pfs_ready_go;
   assign seq_pc = fs_pc + 32'h4;
   assign nextpc = excp_flush ? excp_pc :
                   ertn_flush ? ertn_pc :
-                  br_taken   ? br_target :
-                               seq_pc;
+                  br_taken ? br_target :
+                  seq_pc;
+
+  //flush时，nextpc正确更新为excp_pc，下一拍fs unvalid，但是此时的nextpc已经变了，fs_pc
+  //为什么8010是两拍？
 
   // prf -> fs pipeline
   always @(posedge clk) begin
@@ -90,13 +89,12 @@ module if_stage (
       fs_valid    <= 1'b0;
       fs_pc       <= 32'h1bfffffc;  //trick: to make nextpc be 0x1c000000 during reset
       fs_excp     <= 1'b0;
-      fs_excp_num <= 1'b0;
     end
-    else if (flush_sign) begin
-      fs_valid    <= 1'b0;
+    else if (fs_allowin) begin
+      fs_valid <= to_fs_valid;
     end
-    else if (to_fs_valid && fs_allowin) begin
-      fs_valid    <= to_fs_valid;
+
+    if (to_fs_valid && fs_allowin) begin
       fs_excp     <= pfs_excp;
       fs_excp_num <= pfs_excp_num;
       fs_pc       <= nextpc;

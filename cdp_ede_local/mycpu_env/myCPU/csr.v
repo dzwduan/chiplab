@@ -4,18 +4,25 @@ module csr (
     input  wire        clk,
     input  wire        reset,
     // from to ds
+    output wire [ 1:0] csr_plv,
     input  wire [13:0] rd_addr,
     output wire [31:0] rd_data,
     output wire        has_int,
+    // flush
+    input  wire        excp_flush,
+    input  wire        ertn_flush,
     // from ws
     input  wire        csr_wr_en,
     input  wire [13:0] wr_addr,
     input  wire [31:0] wr_data,
-    input  wire        excp_flush,
-    input  wire        ertn_flush,
     input  wire [31:0] era_in,
     input  wire [ 8:0] esubcode_in,
-    input  wire [ 5:0] ecode_in
+    input  wire [ 5:0] ecode_in,
+    input  wire [31:0] bad_va_in,
+    input  wire        va_error_in,
+    // to fs
+    output wire [31:0] eentry_out,
+    output wire [31:0] era_out
     // input wire [7:0] interrupt
 );
 
@@ -106,13 +113,14 @@ module csr (
                     {32{rd_addr == TICLR }}  & csr_ticlr   |
                     {32{rd_addr == TVAL  }}  & csr_tval    ;
 
+  assign csr_plv = csr_crmd[`PLV];
+  assign eentry_out = csr_eentry;
+  assign era_out = csr_era;
 
   // crmd plv and ie
   always @(posedge clk) begin
     if (reset) begin
-      csr_crmd[`PLV] <= 2'b0;
-      csr_crmd[`IE]  <= 1'b0;
-      csr_crmd[31:9] <= 23'b0;
+      csr_crmd <= 32'h0000_0008;
     end else if (excp_flush) begin
       csr_crmd[`PLV] <= 2'b0;
       csr_crmd[`IE]  <= 1'b0;
@@ -148,13 +156,12 @@ module csr (
       // ticlr[0] ==1, 清除时钟中断标记estat[11], 但是csr_ticlr不变化，直接读csr_ticlr = 0
       if (ticlr_wen && wr_data[`CLR]) begin
         csr_estat[11] <= 1'b0;
-      end
-      // tcfg[0]写使能, 定时器才会进行自减
+      end  // tcfg[0]写使能, 定时器才会进行自减
       else if (tcfg_wen) begin
         timer_en <= wr_data[`EN];
       end
       // 如果定时器在进行自减，且减到1，开启定时器中断，再在下一个周期继续自减;如果periodic为0，下一个周期不自减
-      else if(timer_en && (csr_tval == 32'b0)) begin
+      else if (timer_en && (csr_tval == 32'b0)) begin
         csr_estat[11] <= 1'b1;
         timer_en <= wr_data[`PERIODIC];
       end
@@ -212,7 +219,9 @@ module csr (
 
   // era 当触发例外时，触发例外的指令的PC将被记录在该寄存器中。
   always @(posedge clk) begin
-    if (excp_flush) begin
+    if (reset) begin
+      csr_era <= 32'b0;
+    end else if (excp_flush) begin
       csr_era <= era_in;
     end else if (era_wen) begin
       csr_era <= wr_data;
@@ -225,6 +234,15 @@ module csr (
       csr_eentry <= 32'b0;
     end else if (eentry_wen) begin
       csr_eentry[31:6] <= wr_data[31:6];
+    end
+  end
+
+  //badv 出错虚地址，当前仅使用实地址
+  always @(posedge clk) begin
+    if (badv_wen) begin
+      csr_badv <= wr_data;
+    end else if (va_error_in) begin
+      csr_badv <= bad_va_in;
     end
   end
 
