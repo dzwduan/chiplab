@@ -481,7 +481,8 @@ module id_stage (
                        inst_bgeu   |
                        inst_st_b   |
                        inst_st_h   |
-                       inst_st_w   ;
+                       inst_st_w   |
+                       inst_csrxchg;
 
 
   assign src1_is_pc = inst_jirl | inst_bl | inst_pcaddu12i;

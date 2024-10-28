@@ -136,7 +136,7 @@ module csr (
   // prmd excp save state
   always @(posedge clk) begin
     if (reset) begin
-      csr_prmd <= 32'b0;
+      csr_prmd <= 32'h3;
     end else if (excp_flush) begin
       csr_prmd[`PPLV] <= csr_crmd[`PLV];
       csr_prmd[`PIE]  <= csr_crmd[`IE];
