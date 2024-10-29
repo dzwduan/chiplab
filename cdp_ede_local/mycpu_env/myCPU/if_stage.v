@@ -94,7 +94,7 @@ module if_stage (
       fs_valid <= to_fs_valid;
     end
 
-    if (to_fs_valid && fs_allowin) begin
+    if (to_fs_valid && fs_allowin || excp_flush || ertn_flush) begin
       fs_excp     <= pfs_excp;
       fs_excp_num <= pfs_excp_num;
       fs_pc       <= nextpc;

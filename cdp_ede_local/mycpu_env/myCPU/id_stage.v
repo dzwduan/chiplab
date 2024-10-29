@@ -200,7 +200,7 @@ module id_stage (
   wire                        rf1_ws_need_stall;
   wire                        rf2_ws_need_stall;
 
-  assign ds_ready_go = ~(rf1_forward_stall || rf2_forward_stall);
+  assign ds_ready_go = ~(rf1_forward_stall || rf2_forward_stall) && flush_sign;
   assign ds_allowin = !ds_valid || es_allowin && ds_ready_go;
   assign ds_to_es_valid = ds_valid && ds_ready_go;
   assign flush_sign = excp_flush | ertn_flush;
@@ -482,7 +482,8 @@ module id_stage (
                        inst_st_b   |
                        inst_st_h   |
                        inst_st_w   |
-                       inst_csrxchg;
+                       inst_csrxchg|
+                       inst_csrwr;
 
 
   assign src1_is_pc = inst_jirl | inst_bl | inst_pcaddu12i;

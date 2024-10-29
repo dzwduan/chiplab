@@ -208,7 +208,7 @@ module exe_stage (
     {16{es_sth_wen[3]}} & es_rkd_value[15:0], {16{es_sth_wen[0]}} & es_rkd_value[15:0]
   };
 
-  assign data_sram_en = |(es_store_op | es_load_op) & es_valid;
+  assign data_sram_en = (es_store_op || es_load_op) & es_valid;
   assign data_sram_we = {4{es_store_op}} & (es_mem_size[0] ? es_stb_wen : es_mem_size[1] ? es_sth_wen : !es_mem_size ? 4'b1111 : 4'b0000);
   assign data_sram_addr = es_alu_result;
   assign data_sram_wdata = ({32{es_mem_size[0]}} & es_stb_cont) |
