@@ -79,6 +79,9 @@ module mycpu_top (
   wire [                  5:0] ecode_in;
   wire [                 31:0] eentry_out;
   wire [                 31:0] era_out;
+  wire                         ms_flush;
+  wire                         ms2ds_csr_we;
+  wire                         es2ds_csr_we;
 
   if_stage u_if_stage (
       .clk            (clk),
@@ -124,6 +127,9 @@ module mycpu_top (
       .rd_csr_data         (rd_csr_data),
       .rd_csr_addr         (rd_csr_addr),
       .csr_plv             (csr_plv),
+      .ms2ds_csr_we        (ms2ds_csr_we),
+      // stall from exe csr
+      .es2ds_csr_we        (es2ds_csr_we),
       //interrupt
       .has_int             (has_int),
       //exception
@@ -177,6 +183,7 @@ module mycpu_top (
       //to ds
       .es_to_ds_forward_bus(es_to_ds_forward_bus),
       .es_to_ds_valid      (es_to_ds_valid),
+      .es2ds_csr_we        (es2ds_csr_we),
       //div_mul
       .es_div_enable       (es_div_enable),
       .es_mul_div_sign     (es_mul_div_sign),
@@ -186,6 +193,7 @@ module mycpu_top (
       // exception
       .excp_flush          (excp_flush),
       .ertn_flush          (ertn_flush),
+      .ms_flush            (ms_flush),
       // to data sram
       .data_sram_en        (data_sram_en),
       .data_sram_we        (data_sram_we),
@@ -210,13 +218,15 @@ module mycpu_top (
       .ms_to_ds_forward_bus(ms_to_ds_forward_bus),
       .ms_to_ds_valid      (ms_to_ds_valid),
       .data_sram_rdata     (data_sram_rdata),
+      .ms2ds_csr_we        (ms2ds_csr_we),
       //div mul
       .div_result          (div_result),
       .mod_result          (mod_result),
       .mul_result          (mul_result),
       //excp
       .excp_flush          (excp_flush),
-      .ertn_flush          (ertn_flush)
+      .ertn_flush          (ertn_flush),
+      .ms_flush            (ms_flush)
   );
 
 
@@ -254,7 +264,7 @@ module mycpu_top (
   );
 
 
-// 端口名与wb对齐
+  // 端口名与wb对齐
   csr u_csr (
       .clk        (clk),
       .reset      (reset),
@@ -273,12 +283,12 @@ module mycpu_top (
       .era_in     (csr_era),
       .esubcode_in(csr_esubcode),
       .ecode_in   (csr_ecode),
-      .va_error_in (va_error),
+      .va_error_in(va_error),
       .bad_va_in  (bad_va),
       // to fetch
       .eentry_out (eentry_out),
       .era_out    (era_out)
- 
+
   );
 
 

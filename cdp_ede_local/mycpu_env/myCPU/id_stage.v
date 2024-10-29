@@ -25,6 +25,10 @@ module id_stage (
     //exception
     input  wire                         excp_flush,
     input  wire                         ertn_flush,
+    // stall from mem csr
+    input  wire                         ms2ds_csr_we,
+    // stall from exe csr
+    input  wire                         es2ds_csr_we,
     //timer 64
     input  wire [                 63:0] timer_64,
     input  wire [                 31:0] csr_tid,
@@ -199,8 +203,10 @@ module id_stage (
   wire                        rf2_ms_need_stall;
   wire                        rf1_ws_need_stall;
   wire                        rf2_ws_need_stall;
+  wire                        ms_csr_stall;
+  wire                        es_csr_stall;
 
-  assign ds_ready_go = ~(rf1_forward_stall || rf2_forward_stall) && flush_sign;
+  assign ds_ready_go = ~(rf1_forward_stall || rf2_forward_stall || es_csr_stall || ms_csr_stall) || flush_sign;
   assign ds_allowin = !ds_valid || es_allowin && ds_ready_go;
   assign ds_to_es_valid = ds_valid && ds_ready_go;
   assign flush_sign = excp_flush | ertn_flush;
@@ -219,6 +225,8 @@ module id_stage (
 
   assign {ds_excp, ds_excp_num, ds_pc, ds_inst} = fs_to_ds_bus_r;
 
+  assign ms_csr_stall = ms2ds_csr_we ;
+  assign es_csr_stall = es2ds_csr_we ;
 
   assign op_31_26 = ds_inst[31:26];
   assign op_25_22 = ds_inst[25:22];
@@ -626,7 +634,7 @@ module id_stage (
                     || inst_jirl
                     || inst_bl
                     || inst_b
-                  ) && ds_valid;
+                  ) && ds_valid && !flush_sign;
 
   assign src2_is_4 = inst_jirl | inst_bl;
 
@@ -646,7 +654,9 @@ module id_stage (
   assign csr_mask = inst_csrxchg;  // csr need mask
 
   assign excp     = excp_ipe | inst_syscall | inst_break | ds_excp | excp_ine | has_int; // 是否是异常指令
-  assign excp_num = {excp_ipe, excp_ine, inst_break, inst_syscall, ds_excp_num, has_int}; //异常指令列表onehot
+  assign excp_num = {
+    excp_ipe, excp_ine, inst_break, inst_syscall, ds_excp_num, has_int
+  };  //异常指令列表onehot
   assign rd_csr_addr = csr_idx;
 
   assign br_bus = {br_taken, br_target};

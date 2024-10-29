@@ -11,19 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="1358676767fs"></ZoomStartTime>
-      <ZoomEndTime time="1358760168fs"></ZoomEndTime>
-      <Cursor1Time time="1358695000fs"></Cursor1Time>
+      <ZoomStartTime time="0fs"></ZoomStartTime>
+      <ZoomEndTime time="14420000001fs"></ZoomEndTime>
+      <Cursor1Time time="1358665000fs"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="196"></NameColumnWidth>
-      <ValueColumnWidth column_width="78"></ValueColumnWidth>
+      <ValueColumnWidth column_width="70"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="47" />
-   <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_if_stage/fs_allowin">
-      <obj_property name="ElementShortName">fs_allowin</obj_property>
-      <obj_property name="ObjectShortName">fs_allowin</obj_property>
-   </wvobject>
+   <WVObjectSize size="48" />
    <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_if_stage/fs_valid">
       <obj_property name="ElementShortName">fs_valid</obj_property>
       <obj_property name="ObjectShortName">fs_valid</obj_property>
@@ -40,21 +36,17 @@
       <obj_property name="ElementShortName">excp_flush</obj_property>
       <obj_property name="ObjectShortName">excp_flush</obj_property>
    </wvobject>
-   <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_if_stage/inst_sram_en">
-      <obj_property name="ElementShortName">inst_sram_en</obj_property>
-      <obj_property name="ObjectShortName">inst_sram_en</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/tb_top/soc_lite/cpu/u_if_stage/inst_sram_addr">
-      <obj_property name="ElementShortName">inst_sram_addr[31:0]</obj_property>
-      <obj_property name="ObjectShortName">inst_sram_addr[31:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/tb_top/soc_lite/cpu/u_if_stage/inst_sram_rdata">
-      <obj_property name="ElementShortName">inst_sram_rdata[31:0]</obj_property>
-      <obj_property name="ObjectShortName">inst_sram_rdata[31:0]</obj_property>
-   </wvobject>
    <wvobject fp_name="divider384" type="divider">
       <obj_property name="label">IF -&gt; ID</obj_property>
       <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_id_stage/es_csr_stall">
+      <obj_property name="ElementShortName">es_csr_stall</obj_property>
+      <obj_property name="ObjectShortName">es_csr_stall</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_id_stage/ms_csr_stall">
+      <obj_property name="ElementShortName">ms_csr_stall</obj_property>
+      <obj_property name="ObjectShortName">ms_csr_stall</obj_property>
    </wvobject>
    <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_if_stage/ds_allowin">
       <obj_property name="ElementShortName">ds_allowin</obj_property>
@@ -127,6 +119,18 @@
    <wvobject type="array" fp_name="/tb_top/soc_lite/cpu/u_exe_stage/data_sram_wdata">
       <obj_property name="ElementShortName">data_sram_wdata[31:0]</obj_property>
       <obj_property name="ObjectShortName">data_sram_wdata[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_exe_stage/excp_flush">
+      <obj_property name="ElementShortName">excp_flush</obj_property>
+      <obj_property name="ObjectShortName">excp_flush</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_exe_stage/es_excp">
+      <obj_property name="ElementShortName">es_excp</obj_property>
+      <obj_property name="ObjectShortName">es_excp</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_exe_stage/excp">
+      <obj_property name="ElementShortName">excp</obj_property>
+      <obj_property name="ObjectShortName">excp</obj_property>
    </wvobject>
    <wvobject fp_name="divider386" type="divider">
       <obj_property name="label">EX -&gt; MEM</obj_property>

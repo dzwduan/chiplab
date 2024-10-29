@@ -101008,8 +101008,8 @@ n47_syscall_ex_test():
 
 1c071e34 <syscall_pc7>:
 1c071e34:	002b0000 	syscall	0x0
-1c071e38:	0400182c 	csrwr	$r12,0x6
-1c071e3c:	0400180d 	csrrd	$r13,0x6
+1c071e38:	0400182c 	csrwr	$r12,0x6    # rd中的旧值写入CSR中，CSR的旧值更新到rd
+1c071e3c:	0400180d 	csrrd	$r13,0x6    # csr的值写入到rd
 1c071e40:	5c00173e 	bne	$r25,$r30,20(0x14) # 1c071e54 <inst_error>
 1c071e44:	0015000c 	move	$r12,$r0
 1c071e48:	03800c0d 	ori	$r13,$r0,0x3

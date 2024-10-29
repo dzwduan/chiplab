@@ -16,10 +16,13 @@ module mem_stage (
     output wire [`MS_TO_DS_BUS_WD -1:0] ms_to_ds_forward_bus,
     output wire                         ms_to_ds_valid,
     input  wire [                 31:0] data_sram_rdata,
+    output  wire                         ms2ds_csr_we,
     //div mul
     input  wire [                 31:0] div_result,
     input  wire [                 31:0] mod_result,
     input  wire [                 63:0] mul_result,
+    //to exe
+    output wire                         ms_flush,
     //excp
     input  wire                         excp_flush,
     input  wire                         ertn_flush
@@ -100,6 +103,7 @@ module mem_stage (
     ms_pc
   };
 
+  assign ms2ds_csr_we = ms_csr_we & ms_valid;
 
   // forward path
   assign dest_zero = (ms_dest == 5'b0);
@@ -107,6 +111,8 @@ module mem_stage (
   assign dep_need_stall = 1'b0;
   assign ms_to_ds_forward_bus = {dep_need_stall, forward_enable, ms_dest, ms_final_result};
   assign ms_to_ds_valid = ms_valid;
+
+  assign ms_flush = ms_excp & ms_valid;
 
 
   assign ms_rdata = data_sram_rdata;
