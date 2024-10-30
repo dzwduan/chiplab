@@ -16,7 +16,6 @@ module mem_stage (
     output wire [`MS_TO_DS_BUS_WD -1:0] ms_to_ds_forward_bus,
     output wire                         ms_to_ds_valid,
     input  wire [                 31:0] data_sram_rdata,
-    output  wire                         ms2ds_csr_we,
     //div mul
     input  wire [                 31:0] div_result,
     input  wire [                 31:0] mod_result,
@@ -25,7 +24,8 @@ module mem_stage (
     output wire                         ms_flush,
     //excp
     input  wire                         excp_flush,
-    input  wire                         ertn_flush
+    input  wire                         ertn_flush,
+    input  wire                         refetch_flush
 );
 
   reg                           ms_valid;
@@ -56,11 +56,13 @@ module mem_stage (
   wire                          ms_excp;
   wire [                  31:0] ms_csr_result;
   wire                          flush_sign;
+  wire                          excp;
+  wire [                   6:0] excp_num;
 
   assign ms_ready_go = 1'b1;
   assign ms_allowin = ~ms_valid || ms_ready_go && ws_allowin;
   assign ms_to_ws_valid = ms_valid && ms_ready_go;
-  assign flush_sign = excp_flush | ertn_flush;
+  assign flush_sign = excp_flush | ertn_flush | refetch_flush;
 
   always @(posedge clk) begin
     if (reset | flush_sign) begin
@@ -74,8 +76,8 @@ module mem_stage (
     end
   end
 
-  assign {ms_mem_sign_exted,  //136
-      ms_excp_num,  //135:126
+  assign {ms_mem_sign_exted,  //133
+      ms_excp_num,  //132:126
       ms_csr_we,  //125:125
       ms_csr_idx,  //124:111
       ms_csr_result,  //110:79
@@ -90,20 +92,21 @@ module mem_stage (
       ms_pc  //31:0c
       } = es_to_ms_bus_r;
 
+  assign excp = ms_excp;
+  assign excp_num = ms_excp_num;
+
   assign ms_to_ws_bus = {
-    ms_excp_num,  //128:119
+    excp_num,  //125:119
     ms_csr_we,  //118:118
     ms_csr_idx,  //117:104
     ms_csr_result,  //103:72
     ms_inst_ertn,  //71:71
-    ms_excp,  //70:70
+    excp,  //70:70
     ms_gr_we,  //69:69
     ms_dest,  //68:64
     ms_final_result,  //63:32
     ms_pc
   };
-
-  assign ms2ds_csr_we = ms_csr_we & ms_valid;
 
   // forward path
   assign dest_zero = (ms_dest == 5'b0);

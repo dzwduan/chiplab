@@ -15,7 +15,6 @@ module exe_stage (
     //to ds
     output wire [`ES_TO_DS_BUS_WD -1:0] es_to_ds_forward_bus,
     output wire                         es_to_ds_valid,
-    output wire                         es2ds_csr_we,
     //div_mul
     output wire                         es_div_enable,
     output wire                         es_mul_div_sign,
@@ -25,6 +24,7 @@ module exe_stage (
     // exception
     input  wire                         excp_flush,
     input  wire                         ertn_flush,
+    input  wire                         refetch_flush,
     // from mem
     input  wire                         ms_flush,
     // to data sram
@@ -125,10 +125,10 @@ module exe_stage (
 
 
 
-  assign es_ready_go = !div_stall;  // 没算完div，stall
+  assign es_ready_go = !div_stall || excp;  // 没算完div，stall
   assign es_allowin = !es_valid || (es_ready_go && ms_allowin);
   assign es_to_ms_valid = es_valid && es_ready_go;
-  assign flush_sign = excp_flush | ertn_flush;
+  assign flush_sign = excp_flush | ertn_flush | refetch_flush;
 
   always @(posedge clk) begin
     if (reset | flush_sign) begin
@@ -139,8 +139,6 @@ module exe_stage (
     end
   end
 
-  assign es2ds_csr_we = es_csr_we & es_valid;
-  
   assign es_alu_src1 = es_src1_is_pc ? es_pc : es_rj_value;
   assign es_alu_src2 = (es_src2_is_imm) ? es_imm : (es_src2_is_4) ? 32'd4 : es_rkd_value;
 

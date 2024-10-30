@@ -12,6 +12,8 @@ module if_stage (
     // exception
     input  wire                        excp_flush,
     input  wire                        ertn_flush,
+    input  wire                        refetch_flush,
+    input  wire [                31:0] ws_pc,
     // from csr
     input  wire [                31:0] csr_era,
     input  wire [                31:0] csr_eentry,
@@ -43,8 +45,8 @@ module if_stage (
   wire        pfs_excp;
   wire        pfs_excp_num;
   wire        flush_sign;
-  wire [31:0] excp_pc;
-  wire [31:0] ertn_pc;
+  wire [31:0] excp_entry;
+  wire [31:0] flush_pc;
   wire        excp_num;  //TODO: 需要拓展到多位
   wire        excp;
 
@@ -58,8 +60,8 @@ module if_stage (
   assign pfs_excp_adef = nextpc[1] | nextpc[0];
   assign pfs_excp = pfs_excp_adef;
   assign pfs_excp_num = {pfs_excp_adef};
-  assign excp_pc = csr_eentry;  // 中断的入口地址
-  assign ertn_pc = csr_era;  // 例外的返回地址
+  assign excp_entry = csr_eentry;  // 中断的入口地址
+  assign flush_pc = {32{ertn_flush}} & csr_era | {32{refetch_flush}} & (ws_pc + 32'h4);
   assign excp = fs_excp;
   assign excp_num = fs_excp_num;
 
@@ -75,10 +77,10 @@ module if_stage (
   assign pfs_ready_go = 1'b1;
   assign to_fs_valid = ~reset && pfs_ready_go;
   assign seq_pc = fs_pc + 32'h4;
-  assign nextpc = excp_flush ? excp_pc :
-                  ertn_flush ? ertn_pc :
-                  br_taken ? br_target :
-                  seq_pc;
+  assign nextpc = excp_flush ? excp_entry :
+                  (ertn_flush || refetch_flush) ?
+                  flush_pc : br_taken ?
+                  br_target : seq_pc;
 
   //flush时，nextpc正确更新为excp_pc，下一拍fs unvalid，但是此时的nextpc已经变了，fs_pc
   //为什么8010是两拍？
@@ -86,11 +88,10 @@ module if_stage (
   // prf -> fs pipeline
   always @(posedge clk) begin
     if (reset) begin
-      fs_valid    <= 1'b0;
-      fs_pc       <= 32'h1bfffffc;  //trick: to make nextpc be 0x1c000000 during reset
-      fs_excp     <= 1'b0;
-    end
-    else if (fs_allowin) begin
+      fs_valid <= 1'b0;
+      fs_pc    <= 32'h1bfffffc;  //trick: to make nextpc be 0x1c000000 during reset
+      fs_excp  <= 1'b0;
+    end else if (fs_allowin) begin
       fs_valid <= to_fs_valid;
     end
 
