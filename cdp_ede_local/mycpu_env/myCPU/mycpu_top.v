@@ -83,7 +83,7 @@ module mycpu_top (
   wire [                 31:0] eentry_out;
   wire [                 31:0] era_out;
   wire                         ms_flush;
-  //   wire                         refetch_flush;
+  wire                         refetch_flush;
   wire [                 31:0] csr_rvalue;
   wire [                 13:0] csr_idx;
 
@@ -99,7 +99,7 @@ module mycpu_top (
       // exception
       .excp_flush     (excp_flush),
       .ertn_flush     (ertn_flush),
-      //   .refetch_flush  (refetch_flush),
+      .refetch_flush  (refetch_flush),
       .csr_era        (fs_csr_era),
       .csr_eentry     (fs_csr_eentry),
       .ws_pc          (ws_csr_era),       // 用于refetch
@@ -138,7 +138,7 @@ module mycpu_top (
       //exception
       .excp_flush          (excp_flush),
       .ertn_flush          (ertn_flush),
-      //   .refetch_flush       (refetch_flush),
+      .refetch_flush       (refetch_flush),
       //timer 64
       .timer_64            (timer_64),
       .csr_tid             (csr_tid),
@@ -196,7 +196,7 @@ module mycpu_top (
       // exception
       .excp_flush          (excp_flush),
       .ertn_flush          (ertn_flush),
-      //   .refetch_flush       (refetch_flush),
+      .refetch_flush       (refetch_flush),
       .ms_flush            (ms_flush),
       // to data sram
       .data_sram_en        (data_sram_en),
@@ -229,7 +229,7 @@ module mycpu_top (
       //excp
       .excp_flush          (excp_flush),
       .ertn_flush          (ertn_flush),
-      //   .refetch_flush       (refetch_flush),
+      .refetch_flush       (refetch_flush),
       .ms_flush            (ms_flush)
   );
 
@@ -251,7 +251,7 @@ module mycpu_top (
       //flush
       .excp_flush       (excp_flush),
       .ertn_flush       (ertn_flush),
-      //   .refetch_flush    (refetch_flush),
+      .refetch_flush    (refetch_flush),
       //exception
       .csr_era          (ws_csr_era),
       .csr_esubcode     (ws_csr_esubcode),

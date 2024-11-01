@@ -16,7 +16,7 @@ module wb_stage (
     //flush
     output wire                         excp_flush,
     output wire                         ertn_flush,
-    // output wire                         refetch_flush,
+    output wire                         refetch_flush,
     //exception
     output wire [                 31:0] csr_era,
     output wire [                  8:0] csr_esubcode,
@@ -90,7 +90,7 @@ module wb_stage (
 
   assign excp_flush = ws_excp & ws_valid;
   assign ertn_flush = ws_inst_ertn & ws_valid;  //TODO: if both excp ans etrn ?
-  // assign refetch_flush = ws_csr_we & ws_valid;
+  assign refetch_flush = ws_csr_we & ws_valid;
   assign csr_era = ws_pc;  // 用于中断恢复执行的pc，异常时，当前ws_valid=0，指令无效，所以下一次从该指令继续执行
   assign csr_wr_en = ws_csr_we & ws_valid;
   assign wr_csr_addr = ws_csr_idx;

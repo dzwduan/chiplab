@@ -12,7 +12,7 @@ module if_stage (
     // exception
     input  wire                        excp_flush,
     input  wire                        ertn_flush,
-    // input  wire                        refetch_flush,
+    input  wire                        refetch_flush,
     input  wire [                31:0] ws_pc,
     // from csr
     input  wire [                31:0] csr_era,
@@ -56,13 +56,13 @@ module if_stage (
   assign fs_to_ds_bus = {excp, excp_num, fs_pc, fs_inst};
 
 
-  assign flush_sign = excp_flush | ertn_flush;
+  assign flush_sign = excp_flush | ertn_flush | refetch_flush;
   assign pfs_excp_adef = nextpc[1] | nextpc[0];
   assign pfs_excp = pfs_excp_adef;
   assign pfs_excp_num = {pfs_excp_adef};
   assign excp_entry = csr_eentry;  // 中断的入口地址
-  // assign flush_pc = {32{ertn_flush}} & csr_era | {32{refetch_flush}} & (ws_pc + 32'h4);
-  assign flush_pc = {32{ertn_flush}} & csr_era;
+  assign flush_pc = {32{ertn_flush}} & csr_era | {32{refetch_flush}} & (ws_pc + 32'h4);
+  // assign flush_pc = {32{ertn_flush}} & csr_era;
   assign excp = fs_excp;
   assign excp_num = fs_excp_num;
 
@@ -72,7 +72,7 @@ module if_stage (
   assign to_fs_valid = ~reset && pfs_ready_go;
   assign seq_pc = fs_pc + 32'h4;
   assign nextpc = excp_flush                ?
-                  excp_entry  : (ertn_flush)?
+                  excp_entry  : (ertn_flush | refetch_flush)?
                   flush_pc    : br_taken    ?
                   br_target   : seq_pc;
 

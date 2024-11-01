@@ -25,7 +25,7 @@ module id_stage (
     //exception
     input  wire                         excp_flush,
     input  wire                         ertn_flush,
-    // input  wire                         refetch_flush,
+    input  wire                         refetch_flush,
     //timer 64
     input  wire [                 63:0] timer_64,
     input  wire [                 31:0] csr_tid,
@@ -207,7 +207,7 @@ module id_stage (
   assign ds_ready_go = ~(rf1_forward_stall || rf2_forward_stall) ||  ms_csr_re || es_csr_re ;
   assign ds_allowin = !ds_valid || es_allowin && ds_ready_go;
   assign ds_to_es_valid = ds_valid && ds_ready_go ;
-  assign flush_sign = excp_flush | ertn_flush;
+  assign flush_sign = excp_flush | ertn_flush | refetch_flush;
 
   always @(posedge clk) begin
     if (reset || br_taken || flush_sign) begin

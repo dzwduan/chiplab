@@ -24,7 +24,7 @@ module exe_stage (
     // exception
     input  wire                         excp_flush,
     input  wire                         ertn_flush,
-    // input  wire                         refetch_flush,
+    input  wire                         refetch_flush,
     // from mem
     input  wire                         ms_flush,
     // to data sram
@@ -132,7 +132,7 @@ module exe_stage (
   assign es_ready_go = !div_stall || excp;  // 没算完div，stall
   assign es_allowin = !es_valid || (es_ready_go && ms_allowin);
   assign es_to_ms_valid = es_valid && es_ready_go;
-  assign flush_sign = excp_flush | ertn_flush;
+  assign flush_sign = excp_flush | ertn_flush | refetch_flush;
 
   always @(posedge clk) begin
     if (reset | flush_sign) begin

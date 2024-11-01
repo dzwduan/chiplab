@@ -24,8 +24,8 @@ module mem_stage (
     output wire                         ms_flush,
     //excp
     input  wire                         excp_flush,
-    input  wire                         ertn_flush
-    // input  wire                         refetch_flush
+    input  wire                         ertn_flush,
+    input  wire                         refetch_flush
 );
 
   reg                           ms_valid;
@@ -64,7 +64,7 @@ module mem_stage (
   assign ms_ready_go = 1'b1;
   assign ms_allowin = ~ms_valid || ms_ready_go && ws_allowin;
   assign ms_to_ws_valid = ms_valid && ms_ready_go;
-  assign flush_sign = excp_flush | ertn_flush;
+  assign flush_sign = excp_flush | ertn_flush | refetch_flush;
 
   always @(posedge clk) begin
     if (reset | flush_sign) begin
