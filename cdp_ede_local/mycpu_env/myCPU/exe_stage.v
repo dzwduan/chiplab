@@ -137,7 +137,7 @@ module exe_stage (
   always @(posedge clk) begin
     if (reset | flush_sign) begin
       es_valid <= 1'b0;
-    end else if (ms_allowin) begin
+    end else if (ms_allowin) begin 
       es_valid <= ds_to_es_valid;
     end
 
@@ -220,7 +220,7 @@ module exe_stage (
     {16{es_sth_wen[3]}} & es_rkd_value[15:0], {16{es_sth_wen[0]}} & es_rkd_value[15:0]
   };
 
-  assign data_sram_en = (es_store_op || es_load_op) & es_valid & !ms_flush;
+  assign data_sram_en = (es_store_op || es_load_op) & es_valid & !ms_flush & !flush_sign;
   assign data_sram_we = (!ms_flush & !excp_ale & !excp_flush) ? ({4{es_store_op & es_valid}} & (es_mem_size[0] ?
                                             es_stb_wen : es_mem_size[1] ?
                                             es_sth_wen : !es_mem_size   ?

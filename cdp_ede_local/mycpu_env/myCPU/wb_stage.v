@@ -47,7 +47,6 @@ module wb_stage (
   wire [                13:0] ws_csr_idx;
   wire                        ws_inst_ertn;
   wire                        ws_excp;
-  wire [                31:0] ws_result;
   wire [                31:0] ws_csr_result;
   wire                        flush_sign;
   wire                        ws_rf_we;
@@ -125,7 +124,7 @@ excp_num[0]  int     va_error = 0, badv = 0
   // 如果在decode发现是excp指令，传递到wb,是否要写入regfile?
   // 分析此时流水线中的指令，流水线中的都不用了，因为要跳转新的指令，当前拍的流水线附着了异常信息，内容也要清空
   assign ws_rf_we = ws_valid & ws_gr_we & ~ws_excp;
-  assign ws_rf_wdata = ws_csr_re ? csr_rvalue : ws_final_result;
+  assign ws_rf_wdata = ws_final_result;
 
   // debug info generate
   assign debug_wb_pc = ws_pc & {32{ws_valid}};
