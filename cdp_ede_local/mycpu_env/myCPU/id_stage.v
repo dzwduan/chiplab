@@ -25,7 +25,7 @@ module id_stage (
     //exception
     input  wire                         excp_flush,
     input  wire                         ertn_flush,
-    input  wire                         refetch_flush,
+    // input  wire                         refetch_flush,
     //timer 64
     input  wire [                 63:0] timer_64,
     input  wire [                 31:0] csr_tid,
@@ -200,12 +200,14 @@ module id_stage (
   wire                        rf2_ms_need_stall;
   wire                        rf1_ws_need_stall;
   wire                        rf2_ws_need_stall;
+  wire                        es_csr_re;
+  wire                        ms_csr_re;
 
 
-  assign ds_ready_go = ~(rf1_forward_stall || rf2_forward_stall) || excp_flush;
+  assign ds_ready_go = ~(rf1_forward_stall || rf2_forward_stall) ||  ms_csr_re || es_csr_re ;
   assign ds_allowin = !ds_valid || es_allowin && ds_ready_go;
-  assign ds_to_es_valid = ds_valid && ds_ready_go;
-  assign flush_sign = excp_flush | ertn_flush | refetch_flush;
+  assign ds_to_es_valid = ds_valid && ds_ready_go ;
+  assign flush_sign = excp_flush | ertn_flush;
 
   always @(posedge clk) begin
     if (reset || br_taken || flush_sign) begin
@@ -598,7 +600,8 @@ module id_stage (
   assign rf_raddr1 = rj;
   assign rf_raddr2 = src_reg_is_rd ? rd : rk;
 
-  assign {rf_we,  //37:37
+  assign {
+      rf_we,  //37:37
       rf_waddr,  //36:32
       rf_wdata  //31:0
       } = ws_to_rf_bus;
@@ -628,7 +631,7 @@ module id_stage (
                     || inst_jirl
                     || inst_bl
                     || inst_b
-                  ) && ds_valid && !flush_sign;
+                  ) && ds_valid;
 
   assign src2_is_4 = inst_jirl | inst_bl;
 
@@ -683,13 +686,17 @@ module id_stage (
   };
 
   // forward path
-  assign {es_dep_need_stall,
+  assign {
+        es_csr_re,
+        es_dep_need_stall,
         es_forward_enable,
         es_forward_reg   ,
         es_forward_data
        } = es_to_ds_forward_bus;
 
-  assign {ms_dep_need_stall,
+  assign {
+        ms_csr_re,
+        ms_dep_need_stall,
         ms_forward_enable,
         ms_forward_reg   ,
         ms_forward_data
@@ -699,8 +706,8 @@ module id_stage (
   assign rf2_es_need_stall = (es_forward_reg == rf_raddr2) && es_forward_enable && inst_need_rkd;
   assign rf1_ms_need_stall = (ms_forward_reg == rf_raddr1) && ms_forward_enable && inst_need_rj;
   assign rf2_ms_need_stall = (ms_forward_reg == rf_raddr2) && ms_forward_enable && inst_need_rkd;
-  assign rf1_ws_need_stall = (rf_waddr == rf_raddr1) && ws_to_ds_valid && inst_need_rj;
-  assign rf2_ws_need_stall = (rf_waddr == rf_raddr2) && ws_to_ds_valid && inst_need_rkd;
+  assign rf1_ws_need_stall = (rf_waddr == rf_raddr1) && ws_to_ds_valid && inst_need_rj && rf_waddr != 5'b0;
+  assign rf2_ws_need_stall = (rf_waddr == rf_raddr2) && ws_to_ds_valid && inst_need_rkd && rf_waddr != 5'b0;
 
   assign {rf1_forward_stall, rj_value}  = rf1_es_need_stall ? {es_dep_need_stall, es_forward_data} :
                                           rf1_ms_need_stall ? {ms_dep_need_stall, ms_forward_data} :

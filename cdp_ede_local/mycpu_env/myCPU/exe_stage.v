@@ -24,7 +24,7 @@ module exe_stage (
     // exception
     input  wire                         excp_flush,
     input  wire                         ertn_flush,
-    input  wire                         refetch_flush,
+    // input  wire                         refetch_flush,
     // from mem
     input  wire                         ms_flush,
     // to data sram
@@ -77,6 +77,8 @@ module exe_stage (
   wire                         excp;
   wire [                  6:0] excp_num;
   wire                         access_mem;
+  wire                         es_csr_re;
+  wire [                 31:0] error_va;
 
   assign {
       es_excp_num,
@@ -107,6 +109,8 @@ module exe_stage (
 
 
   assign es_to_ms_bus = {
+    error_va,
+    es_csr_re,
     es_mem_sign_exted,  //136
     excp_num,  //135:126
     es_csr_we,  //125:125
@@ -128,7 +132,7 @@ module exe_stage (
   assign es_ready_go = !div_stall || excp;  // 没算完div，stall
   assign es_allowin = !es_valid || (es_ready_go && ms_allowin);
   assign es_to_ms_valid = es_valid && es_ready_go;
-  assign flush_sign = excp_flush | ertn_flush | refetch_flush;
+  assign flush_sign = excp_flush | ertn_flush;
 
   always @(posedge clk) begin
     if (reset | flush_sign) begin
@@ -151,21 +155,23 @@ module exe_stage (
   assign csr_mask_result = (es_rj_value & es_rkd_value) | (~es_rj_value & es_csr_data);
   // data for writing to rd
   assign es_csr_result = es_csr_mask ? csr_mask_result : es_rkd_value;
+  assign error_va = es_alu_result;
 
   assign access_mem = es_load_op | es_store_op;
   // 检查地址对齐，b不需要考虑, h需要最低位为0， w需要最低两位为0
-  assign excp_ale = access_mem && (es_mem_size[0] & 1'b0) |
+  assign excp_ale = access_mem && ((es_mem_size[0] & 1'b0) |
                     (es_mem_size[1] & es_alu_result[0]) |
-                    ((!es_mem_size[0] & !es_mem_size[1]) & (es_alu_result[0] | es_alu_result[1]));
+                    (!es_mem_size   & (es_alu_result[0] | es_alu_result[1])));
 
   assign excp = es_excp | excp_ale;
   assign excp_num = {excp_ale, es_excp_num};
 
   // forward path
+  assign es_csr_re = es_res_from_csr & es_valid;
   assign dest_zero = (es_dest == 5'b0);
   assign forward_enable = es_valid & es_gr_we & !dest_zero;
   assign dep_need_stall = es_load_op | es_div_enable | es_mul_enable;
-  assign es_to_ds_forward_bus = {dep_need_stall, forward_enable, es_dest, es_result};
+  assign es_to_ds_forward_bus = {es_csr_re, dep_need_stall, forward_enable, es_dest, es_result};
   assign es_to_ds_valid = es_valid;
 
   alu u_alu (
@@ -212,12 +218,12 @@ module exe_stage (
   };
 
   assign data_sram_en = (es_store_op || es_load_op) & es_valid;
-  assign data_sram_we = !ms_flush ? ({4{es_store_op}} & (es_mem_size[0] ?
+  assign data_sram_we = (!ms_flush & !excp_ale) ? ({4{es_store_op & es_valid}} & (es_mem_size[0] ?
                                             es_stb_wen : es_mem_size[1] ?
                                             es_sth_wen : !es_mem_size   ?
                                             4'b1111 : 4'b0000)) :
                                             4'b0000;
-  assign data_sram_addr = es_alu_result;
+  assign data_sram_addr = {es_alu_result[31:2], 2'b0};
   assign data_sram_wdata = ({32{es_mem_size[0]}} & es_stb_cont) |
                            ({32{es_mem_size[1]}} & es_sth_cont) |
                            ({32{!es_mem_size}}   & es_rkd_value);

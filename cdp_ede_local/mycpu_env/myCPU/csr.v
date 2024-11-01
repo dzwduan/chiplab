@@ -8,6 +8,8 @@ module csr (
     input  wire [13:0] rd_addr,
     output wire [31:0] rd_data,
     output wire        has_int,
+    output wire [63:0] timer_64_out,
+    output wire [31:0] tid_out,
     // flush
     input  wire        excp_flush,
     input  wire        ertn_flush,
@@ -20,6 +22,8 @@ module csr (
     input  wire [ 5:0] ecode_in,
     input  wire [31:0] bad_va_in,
     input  wire        va_error_in,
+    output wire [31:0] csr_rvalue,
+    input  wire [13:0] csr_idx,
     // to fs
     output wire [31:0] eentry_out,
     output wire [31:0] era_out
@@ -93,9 +97,10 @@ module csr (
   reg  [31:0] csr_tval;
   reg  [31:0] csr_ticlr;
   reg  [31:0] csr_brk;
+  reg  [63:0] timer_64;
 
   // estat对中断状态输入引脚信号采样，ecfg是局部中断使能，crmd ie是全局中断使能
-  assign has_int = (csr_estat[`IS] != 13'b0 & csr_ectl[`LIE] != 13'b0) && csr_crmd[`IE];
+  assign has_int = (|(csr_estat[`IS] & csr_ectl[`LIE])) & csr_crmd[`IE];
 
   assign rd_data =  {32{rd_addr == CRMD  }}  & csr_crmd    |
                     {32{rd_addr == PRMD  }}  & csr_prmd    |
@@ -113,9 +118,28 @@ module csr (
                     {32{rd_addr == TICLR }}  & csr_ticlr   |
                     {32{rd_addr == TVAL  }}  & csr_tval    ;
 
+  assign csr_rvalue =  {32{csr_idx == CRMD  }}  & csr_crmd    |
+                    {32{csr_idx == PRMD  }}  & csr_prmd    |
+                    {32{csr_idx == ECTL  }}  & csr_ectl    |
+                    {32{csr_idx == ESTAT }}  & csr_estat   |
+                    {32{csr_idx == ERA   }}  & csr_era     |
+                    {32{csr_idx == BADV  }}  & csr_badv    |
+                    {32{csr_idx == EENTRY}}  & csr_eentry  |
+                    {32{csr_idx == SAVE0 }}  & csr_save0   |
+                    {32{csr_idx == SAVE1 }}  & csr_save1   |
+                    {32{csr_idx == SAVE2 }}  & csr_save2   |
+                    {32{csr_idx == SAVE3 }}  & csr_save3   |
+                    {32{csr_idx == TID   }}  & csr_tid     |
+                    {32{csr_idx == TCFG  }}  & csr_tcfg    |
+                    {32{csr_idx == TICLR }}  & csr_ticlr   |
+                    {32{csr_idx == TVAL  }}  & csr_tval    ;
+
+
   assign csr_plv = csr_crmd[`PLV];
   assign eentry_out = csr_eentry;
   assign era_out = csr_era;
+  assign tid_out = csr_tid;
+  assign timer_64_out = timer_64;
 
   // crmd plv and ie
   always @(posedge clk) begin
@@ -163,7 +187,7 @@ module csr (
       // 如果定时器在进行自减，且减到1，开启定时器中断，再在下一个周期继续自减;如果periodic为0，下一个周期不自减
       else if (timer_en && (csr_tval == 32'b0)) begin
         csr_estat[11] <= 1'b1;
-        timer_en <= wr_data[`PERIODIC];
+        timer_en <= csr_tcfg[`PERIODIC];
       end
       // interrupt设置
       // csr_estat[9:2] <= interrupt;
@@ -186,10 +210,20 @@ module csr (
     end
   end
 
+  //ectl
+  always @(posedge clk) begin
+    if (reset) begin
+      csr_ectl <= 32'b0;
+    end else if (ectl_wen) begin
+      csr_ectl[`LIE_1] <= wr_data[`LIE_1];
+      csr_ectl[`LIE_2] <= wr_data[`LIE_2];
+    end
+  end
+
   // tcfg 配置定时器
   always @(posedge clk) begin
     if (reset) begin
-      csr_tcfg[`EN] <= 1'b0;
+      csr_tcfg <= 32'b0;
     end else if (tcfg_wen) begin
       csr_tcfg[`EN] <= wr_data[`EN];
       csr_tcfg[`PERIODIC] <= wr_data[`PERIODIC];
@@ -207,7 +241,7 @@ module csr (
   // tval 仅可读不可写,软件可通过读取该寄存器来获知定时器当前的计数值
   always @(posedge clk) begin
     if (tcfg_wen) begin
-      csr_tval <= {csr_tcfg[`INITVAL], 2'b0};
+      csr_tval <= {wr_data[`INITVAL], 2'b0};
     end else if (timer_en) begin
       if (csr_tval != 32'b0) begin
         csr_tval <= csr_tval - 32'b1;
@@ -239,7 +273,9 @@ module csr (
 
   //badv 出错虚地址，当前仅使用实地址
   always @(posedge clk) begin
-    if (badv_wen) begin
+    if (reset) begin
+      csr_badv <= 32'b0;
+    end else if (badv_wen) begin
       csr_badv <= wr_data;
     end else if (va_error_in) begin
       csr_badv <= bad_va_in;
@@ -247,30 +283,45 @@ module csr (
   end
 
   always @(posedge clk) begin
-    if (save0_wen) begin
+    if (reset) begin
+      csr_save0 <= 32'b0;
+    end else if (save0_wen) begin
       csr_save0 <= wr_data;
     end
   end
 
   always @(posedge clk) begin
-    if (save1_wen) begin
+    if (reset) begin
+      csr_save1 <= 32'b0;
+    end else if (save1_wen) begin
       csr_save1 <= wr_data;
     end
   end
 
   always @(posedge clk) begin
-    if (save2_wen) begin
+    if (reset) begin
+      csr_save2 <= 32'b0;
+    end else if (save2_wen) begin
       csr_save2 <= wr_data;
     end
   end
 
   always @(posedge clk) begin
-    if (save3_wen) begin
+    if (reset) begin
+      csr_save3 <= 32'b0;
+    end else if (save3_wen) begin
       csr_save3 <= wr_data;
     end
   end
 
-
+  //timer_64
+  always @(posedge clk) begin
+    if (reset) begin
+      timer_64 <= 64'b0;
+    end else begin
+      timer_64 <= timer_64 + 1'b1;
+    end
+  end
 
 
 endmodule

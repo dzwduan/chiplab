@@ -12,7 +12,7 @@ module if_stage (
     // exception
     input  wire                        excp_flush,
     input  wire                        ertn_flush,
-    input  wire                        refetch_flush,
+    // input  wire                        refetch_flush,
     input  wire [                31:0] ws_pc,
     // from csr
     input  wire [                31:0] csr_era,
@@ -61,29 +61,21 @@ module if_stage (
   assign pfs_excp = pfs_excp_adef;
   assign pfs_excp_num = {pfs_excp_adef};
   assign excp_entry = csr_eentry;  // 中断的入口地址
-  assign flush_pc = {32{ertn_flush}} & csr_era | {32{refetch_flush}} & (ws_pc + 32'h4);
+  // assign flush_pc = {32{ertn_flush}} & csr_era | {32{refetch_flush}} & (ws_pc + 32'h4);
+  assign flush_pc = {32{ertn_flush}} & csr_era;
   assign excp = fs_excp;
   assign excp_num = fs_excp_num;
 
-
-  /**
-  主要包括各阶段的 valid、readygo、allowin.
-  valid   用来判断当前阶段是否有效；
-  readygo 用来判断当前阶段进行的操作是否能在一拍内完成;
-  allowin 用来判断是否允许前一个模块的数据传入
-  */
 
 
   assign pfs_ready_go = 1'b1;
   assign to_fs_valid = ~reset && pfs_ready_go;
   assign seq_pc = fs_pc + 32'h4;
-  assign nextpc = excp_flush ? excp_entry :
-                  (ertn_flush || refetch_flush) ?
-                  flush_pc : br_taken ?
-                  br_target : seq_pc;
+  assign nextpc = excp_flush                ?
+                  excp_entry  : (ertn_flush)?
+                  flush_pc    : br_taken    ?
+                  br_target   : seq_pc;
 
-  //flush时，nextpc正确更新为excp_pc，下一拍fs unvalid，但是此时的nextpc已经变了，fs_pc
-  //为什么8010是两拍？
 
   // prf -> fs pipeline
   always @(posedge clk) begin
@@ -95,7 +87,7 @@ module if_stage (
       fs_valid <= to_fs_valid;
     end
 
-    if (to_fs_valid && fs_allowin || excp_flush || ertn_flush) begin
+    if (to_fs_valid && fs_allowin) begin
       fs_excp     <= pfs_excp;
       fs_excp_num <= pfs_excp_num;
       fs_pc       <= nextpc;
@@ -104,7 +96,7 @@ module if_stage (
 
 
   assign fs_ready_go     = 1'b1;
-  assign fs_allowin      = !fs_valid || fs_ready_go && ds_allowin;
+  assign fs_allowin      = !fs_valid || fs_ready_go && ds_allowin || flush_sign;
   assign fs_to_ds_valid  = fs_valid && fs_ready_go;
 
   assign inst_sram_en    = ~reset && fs_allowin;

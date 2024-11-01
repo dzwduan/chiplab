@@ -24,8 +24,8 @@ module mem_stage (
     output wire                         ms_flush,
     //excp
     input  wire                         excp_flush,
-    input  wire                         ertn_flush,
-    input  wire                         refetch_flush
+    input  wire                         ertn_flush
+    // input  wire                         refetch_flush
 );
 
   reg                           ms_valid;
@@ -58,11 +58,13 @@ module mem_stage (
   wire                          flush_sign;
   wire                          excp;
   wire [                   6:0] excp_num;
+  wire                          ms_csr_re;
+  wire [                  31:0] error_va;
 
   assign ms_ready_go = 1'b1;
   assign ms_allowin = ~ms_valid || ms_ready_go && ws_allowin;
   assign ms_to_ws_valid = ms_valid && ms_ready_go;
-  assign flush_sign = excp_flush | ertn_flush | refetch_flush;
+  assign flush_sign = excp_flush | ertn_flush;
 
   always @(posedge clk) begin
     if (reset | flush_sign) begin
@@ -76,7 +78,8 @@ module mem_stage (
     end
   end
 
-  assign {ms_mem_sign_exted,  //133
+  assign {
+      error_va, ms_csr_re, ms_mem_sign_exted,  //133
       ms_excp_num,  //132:126
       ms_csr_we,  //125:125
       ms_csr_idx,  //124:111
@@ -96,6 +99,8 @@ module mem_stage (
   assign excp_num = ms_excp_num;
 
   assign ms_to_ws_bus = {
+    error_va,
+    ms_csr_re,
     excp_num,  //125:119
     ms_csr_we,  //118:118
     ms_csr_idx,  //117:104
@@ -112,10 +117,12 @@ module mem_stage (
   assign dest_zero = (ms_dest == 5'b0);
   assign forward_enable = ms_valid & ms_gr_we & !dest_zero;
   assign dep_need_stall = 1'b0;
-  assign ms_to_ds_forward_bus = {dep_need_stall, forward_enable, ms_dest, ms_final_result};
+  assign ms_to_ds_forward_bus = {
+    ms_csr_re & ms_valid, dep_need_stall, forward_enable, ms_dest, ms_final_result
+  };
   assign ms_to_ds_valid = ms_valid;
 
-  assign ms_flush = ms_excp & ms_valid;
+  assign ms_flush = (excp | ms_inst_ertn) & ms_valid;
 
 
   assign ms_rdata = data_sram_rdata;
@@ -142,5 +149,3 @@ module mem_stage (
                          ({32{!ms_mul_div_op && !ms_load_op}} & ms_exe_result);
 
 endmodule
-
-//TODO: fix ms to ws bus

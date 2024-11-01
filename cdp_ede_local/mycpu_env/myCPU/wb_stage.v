@@ -16,7 +16,7 @@ module wb_stage (
     //flush
     output wire                         excp_flush,
     output wire                         ertn_flush,
-    output wire                         refetch_flush,
+    // output wire                         refetch_flush,
     //exception
     output wire [                 31:0] csr_era,
     output wire [                  8:0] csr_esubcode,
@@ -26,6 +26,8 @@ module wb_stage (
     output wire [                 31:0] wr_csr_data,
     output wire                         va_error,
     output wire [                 31:0] bad_va,
+    input  wire [                 31:0] csr_rvalue,
+    output wire [                 13:0] csr_idx,
     //trace debug interface
     output wire [                 31:0] debug_wb_pc,
     output wire [                  3:0] debug_wb_rf_we,
@@ -48,7 +50,10 @@ module wb_stage (
   wire [                31:0] ws_result;
   wire [                31:0] ws_csr_result;
   wire                        flush_sign;
-  wire                        rf_we;
+  wire                        ws_rf_we;
+  wire [                31:0] ws_rf_wdata;
+  wire                        ws_csr_re;
+  wire [                31:0] error_va;
 
 
   assign ws_ready_go    = 1'b1;
@@ -70,7 +75,8 @@ module wb_stage (
   end
 
 
-  assign {ws_excp_num,  //125:119
+  assign {
+      error_va, ws_csr_re, ws_excp_num,  //125:119
       ws_csr_we,  //118:118
       ws_csr_idx,  //117:104
       ws_csr_result,  //103:72
@@ -84,7 +90,7 @@ module wb_stage (
 
   assign excp_flush = ws_excp & ws_valid;
   assign ertn_flush = ws_inst_ertn & ws_valid;  //TODO: if both excp ans etrn ?
-  assign refetch_flush = ws_csr_we & ws_valid;
+  // assign refetch_flush = ws_csr_we & ws_valid;
   assign csr_era = ws_pc;  // 用于中断恢复执行的pc，异常时，当前ws_valid=0，指令无效，所以下一次从该指令继续执行
   assign csr_wr_en = ws_csr_we & ws_valid;
   assign wr_csr_addr = ws_csr_idx;
@@ -111,17 +117,20 @@ excp_num[0]  int     va_error = 0, badv = 0
       ws_excp_num[3] ? {`ECODE_BRK, 1'b0, 32'b0, 9'b0} :
       ws_excp_num[4] ? {`ECODE_INE, 1'b0, 32'b0, 9'b0} :
       ws_excp_num[5] ? {`ECODE_IPE, 1'b0, 32'b0, 9'b0} :
-      ws_excp_num[6] ? {`ECODE_ALE, ws_valid, ws_pc,  9'b0} : 48'b0;
+      ws_excp_num[6] ? {`ECODE_ALE, ws_valid, error_va,  9'b0} : 48'b0;
 
-  assign ws_to_rf_bus = {ws_gr_we, ws_dest, ws_final_result};
+  assign csr_idx =  ws_csr_idx;
+
+  assign ws_to_rf_bus = {ws_rf_we, ws_dest, ws_rf_wdata};
   // 如果在decode发现是excp指令，传递到wb,是否要写入regfile?
   // 分析此时流水线中的指令，流水线中的都不用了，因为要跳转新的指令，当前拍的流水线附着了异常信息，内容也要清空
-  assign rf_we = ws_valid & ws_gr_we & ~ws_excp;
+  assign ws_rf_we = ws_valid & ws_gr_we & ~ws_excp;
+  assign ws_rf_wdata = ws_csr_re ? csr_rvalue : ws_final_result;
 
   // debug info generate
   assign debug_wb_pc = ws_pc & {32{ws_valid}};
-  assign debug_wb_rf_we = {4{rf_we}};
+  assign debug_wb_rf_we = {4{ws_rf_we}};
   assign debug_wb_rf_wnum = ws_dest & {5{ws_valid}};
-  assign debug_wb_rf_wdata = ws_final_result & {32{ws_valid}};
+  assign debug_wb_rf_wdata = ws_rf_wdata & {32{ws_valid}};
 
 endmodule
