@@ -122,7 +122,7 @@ module mem_stage (
   };
   assign ms_to_ds_valid = ms_valid;
 
-  assign ms_flush = (excp | ms_inst_ertn) & ms_valid;
+  assign ms_flush = (excp | ms_inst_ertn | ms_csr_we ) & ms_valid  ;
 
 
   assign ms_rdata = data_sram_rdata;

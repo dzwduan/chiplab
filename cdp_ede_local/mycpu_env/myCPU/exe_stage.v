@@ -129,7 +129,7 @@ module exe_stage (
 
 
 
-  assign es_ready_go = !div_stall || excp;  // 没算完div，stall
+  assign es_ready_go = !div_stall & !ms_flush;  // 没算完div，stall
   assign es_allowin = !es_valid || (es_ready_go && ms_allowin);
   assign es_to_ms_valid = es_valid && es_ready_go;
   assign flush_sign = excp_flush | ertn_flush | refetch_flush;
@@ -137,8 +137,11 @@ module exe_stage (
   always @(posedge clk) begin
     if (reset | flush_sign) begin
       es_valid <= 1'b0;
-    end else if (es_allowin) begin
+    end else if (ms_allowin) begin
       es_valid <= ds_to_es_valid;
+    end
+
+    if (ds_to_es_valid && es_allowin) begin
       ds_to_es_bus_r <= ds_to_es_bus;
     end
   end
@@ -217,8 +220,8 @@ module exe_stage (
     {16{es_sth_wen[3]}} & es_rkd_value[15:0], {16{es_sth_wen[0]}} & es_rkd_value[15:0]
   };
 
-  assign data_sram_en = (es_store_op || es_load_op) & es_valid;
-  assign data_sram_we = (!ms_flush & !excp_ale) ? ({4{es_store_op & es_valid}} & (es_mem_size[0] ?
+  assign data_sram_en = (es_store_op || es_load_op) & es_valid & !ms_flush;
+  assign data_sram_we = (!ms_flush & !excp_ale & !excp_flush) ? ({4{es_store_op & es_valid}} & (es_mem_size[0] ?
                                             es_stb_wen : es_mem_size[1] ?
                                             es_sth_wen : !es_mem_size   ?
                                             4'b1111 : 4'b0000)) :
