@@ -18,11 +18,16 @@ module if_stage (
     input  wire [                31:0] csr_era,
     input  wire [                31:0] csr_eentry,
     // inst sram interface
-    output wire                        inst_sram_en,
-    output wire [                 3:0] inst_sram_we,
-    output wire [                31:0] inst_sram_addr,
-    output wire [                31:0] inst_sram_wdata,
-    input  wire [                31:0] inst_sram_rdata
+    // inst sram interface
+    output wire         inst_sram_req,
+    output wire         inst_sram_wr,
+    output wire [ 1:0]  inst_sram_size,
+    output wire [ 3:0]  inst_sram_wstrb,
+    output wire [31:0]  inst_sram_addr,
+    output wire [31:0]  inst_sram_wdata,
+    input  wire         inst_sram_addr_ok,
+    input  wire         inst_sram_data_ok,
+    input  wire [31:0]  inst_sram_rdata
 );
 
   reg         fs_valid;

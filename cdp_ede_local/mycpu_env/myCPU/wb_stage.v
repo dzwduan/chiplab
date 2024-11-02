@@ -76,13 +76,13 @@ module wb_stage (
 
   assign {
       error_va, ws_csr_re, ws_excp_num,  //125:119
-      ws_csr_we,  //118:118
+      ws_csr_we,  //118:118S
       ws_csr_idx,  //117:104
       ws_csr_result,  //103:72
       ws_inst_ertn,  //71:71
       ws_excp,  //70:70
       ws_gr_we,  //69:69
-      ws_dest,  //68:64
+      ws_dest,  //68:64S
       ws_final_result,  //63:32
       ws_pc} = ms_to_ws_bus_r;
 

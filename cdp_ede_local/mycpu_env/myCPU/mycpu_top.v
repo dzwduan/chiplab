@@ -5,16 +5,24 @@ module mycpu_top (
     input  wire        clk,
     input  wire        resetn,
     // inst sram interface
-    output wire        inst_sram_en,
-    output wire [ 3:0] inst_sram_we,
+    output wire        inst_sram_req,
+    output wire        inst_sram_wr,
+    output wire [ 1:0] inst_sram_size,
+    output wire [ 3:0] inst_sram_wstrb,
     output wire [31:0] inst_sram_addr,
     output wire [31:0] inst_sram_wdata,
+    input  wire        inst_sram_addr_ok,
+    input  wire        inst_sram_data_ok,
     input  wire [31:0] inst_sram_rdata,
     // data sram interface
-    output wire        data_sram_en,
-    output wire [ 3:0] data_sram_we,
+    output wire        data_sram_req,
+    output wire        data_sram_wr,
+    output wire [ 1:0] data_sram_size,
+    output wire [ 3:0] data_sram_wstrb,
     output wire [31:0] data_sram_addr,
     output wire [31:0] data_sram_wdata,
+    input  wire        data_sram_addr_ok,
+    input  wire        data_sram_data_ok,
     input  wire [31:0] data_sram_rdata,
     // trace debug interface
     output wire [31:0] debug_wb_pc,
@@ -88,27 +96,30 @@ module mycpu_top (
   wire [                 13:0] csr_idx;
 
   if_stage u_if_stage (
-      .clk            (clk),
-      .reset          (reset),
+      .clk              (clk),
+      .reset            (reset),
       //if <> id
-      .ds_allowin     (ds_allowin),
-      .fs_to_ds_valid (fs_to_ds_valid),
-      .fs_to_ds_bus   (fs_to_ds_bus),
+      .ds_allowin       (ds_allowin),
+      .fs_to_ds_valid   (fs_to_ds_valid),
+      .fs_to_ds_bus     (fs_to_ds_bus),
       // brbus
-      .br_bus         (br_bus),
+      .br_bus           (br_bus),
       // exception
-      .excp_flush     (excp_flush),
-      .ertn_flush     (ertn_flush),
-      .refetch_flush  (refetch_flush),
-      .csr_era        (fs_csr_era),
-      .csr_eentry     (fs_csr_eentry),
-      .ws_pc          (ws_csr_era),       // 用于refetch
+      .excp_flush       (excp_flush),
+      .ertn_flush       (ertn_flush),
+      .refetch_flush    (refetch_flush),
+      .csr_era          (fs_csr_era),
+      .csr_eentry       (fs_csr_eentry),
+      .ws_pc            (ws_csr_era),         // 用于refetch
       // inst sram interface
-      .inst_sram_en   (inst_sram_en),
-      .inst_sram_we   (inst_sram_we),
-      .inst_sram_addr (inst_sram_addr),
-      .inst_sram_wdata(inst_sram_wdata),
-      .inst_sram_rdata(inst_sram_rdata)
+      .inst_sram_req    (inst_sram_req),
+      .inst_sram_wr     (inst_sram_wr),
+      .inst_sram_size   (inst_sram_size),
+      .inst_sram_wstrb  (inst_sram_wstrb),
+      .inst_sram_addr   (inst_sram_addr),
+      .inst_sram_addr_ok(inst_sram_addr_ok),
+      .inst_sram_data_ok(inst_sram_data_ok),
+      .inst_sram_rdata  (inst_sram_rdata)
   );
 
 
@@ -199,10 +210,13 @@ module mycpu_top (
       .refetch_flush       (refetch_flush),
       .ms_flush            (ms_flush),
       // to data sram
-      .data_sram_en        (data_sram_en),
-      .data_sram_we        (data_sram_we),
+      .data_sram_req       (data_sram_req),
+      .data_sram_wr        (data_sram_wr),
+      .data_sram_size      (data_sram_size),
+      .data_sram_wstrb     (data_sram_wstrb),
+      .data_sram_wdata     (data_sram_wdata),
       .data_sram_addr      (data_sram_addr),
-      .data_sram_wdata     (data_sram_wdata)
+      .data_sram_addr_ok   (data_sram_addr_ok)
   );
 
 
