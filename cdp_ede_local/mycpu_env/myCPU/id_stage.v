@@ -1,4 +1,5 @@
 `include "mycpu.vh"
+`include "tools.v"
 `default_nettype none
 module id_stage (
     input  wire                         clk,

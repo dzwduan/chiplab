@@ -1,18 +1,3 @@
-.vscode
-.idea
-cmake-build-debug
-CMakeLists.txt
-toolchains/*
-!toolchains/README.md
-software/random_res
-sims/verilator/run_prog/single.log
-.sv_cache
-
-
-cdp_ede_local/mycpu_env/soc_verify/
-cdp_ede_local/mycpu_env/gettrace/
-open-la500
-vivado*
-# cdp_ede_local/mycpu_env/func
-cdp_ede_local/mycpu_env/func/obj
-.Xil
+*.*
+*
+!cdp_ede_local/mycpu_env/myCPU

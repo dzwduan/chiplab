@@ -73,7 +73,7 @@ module if_stage (
 
 
 
-  assign pfs_ready_go = 1'b1;
+  assign pfs_ready_go = inst_sram_req & inst_sram_addr_ok;
   assign to_fs_valid = ~reset && pfs_ready_go;
   assign seq_pc = fs_pc + 32'h4;
   assign nextpc = excp_flush                ?
@@ -100,15 +100,22 @@ module if_stage (
   end
 
 
-  assign fs_ready_go     = 1'b1;
+  assign fs_ready_go     = inst_sram_data_ok;
   assign fs_allowin      = !fs_valid || fs_ready_go && ds_allowin || flush_sign;
   assign fs_to_ds_valid  = fs_valid && fs_ready_go;
 
-  assign inst_sram_en    = ~reset && fs_allowin;
-  assign inst_sram_we    = 4'b0;
-  assign inst_sram_addr  = nextpc;  // 在pre fetch阶段提前给addr，因为sram是同步的
-  assign inst_sram_wdata = 32'b0;
-  assign fs_inst         = inst_sram_rdata;
+  // assign inst_sram_en    = ~reset && fs_allowin;
+  // assign inst_sram_we    = 4'b0;
+  // assign inst_sram_addr  = nextpc;  // 在pre fetch阶段提前给addr，因为sram是同步的
+  // assign inst_sram_wdata = 32'b0;
+  // assign fs_inst         = inst_sram_rdata;
+
+  assign inst_sram_req = ~reset & fs_allowin;
+  assign inst_sram_wr = 1'b0;
+  assign inst_sram_size = 2'b10;
+  assign inst_sram_addr = nextpc;
+  assign inst_sram_wstrb = 4'b0000;
+  assign inst_sram_wdata = 32'h0;
 
 
 endmodule
