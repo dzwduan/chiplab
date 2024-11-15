@@ -1,7 +1,8 @@
 create_project -force loongson ./project -part xc7a200tfbg676-1
 
 # Add conventional sources
-add_files -scan_for_includes ../rtl
+add_files -scan_for_includes [glob -nocomplain ../rtl/*.v]
+add_files -scan_for_includes [glob -nocomplain ../rtl/*/*.v]
 
 # Add IPs
 add_files -quiet [glob -nocomplain ../rtl/xilinx_ip/*/*.xci]

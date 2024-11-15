@@ -115,7 +115,7 @@ LEAF(tlb_init)
     FILL_TLB(0x003aab00, 0x00ffab00)
 ###TLB item 8
     FILL_TLB(0x0134ab00, 0x01ffab00)
-	
+    
     li.w  t2, 0x000000ac
     csrwr t2, csr_asid
 
@@ -127,7 +127,7 @@ LEAF(tlb_init)
     FILL_TLB(0x034ab100, 0x0ffab100)
 ###TLB item 12
     FILL_TLB(0x034ab200, 0x0ffab200)
-	
+    
     li.w  t2, 0x000000ad
     csrwr t2, csr_asid
 

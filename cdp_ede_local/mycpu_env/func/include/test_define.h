@@ -97,7 +97,7 @@
     csrwr t5, csr_tlbelo1 ; \
     tlbwr ; \
     addi.w t0, t0, 0x1 ; \
-	li.w     t5, 1<<13 ; \
+    li.w     t5, 1<<13 ; \
     add.w t1, t1, t5 
 
 #define TEST_TLBSRCH(in_asid, in_vpn, ref) \
@@ -124,7 +124,7 @@
     csrwr t5, csr_tlbelo1 ; \
     tlbwr ; \
     addi.w t0, t0, 0x1 ; \
-	li.w     t5, 1<<22 ; \
+    li.w     t5, 1<<22 ; \
     add.w t1, t1, t5 
 
 #define TEST_TLBSRCH_4MB(in_asid, in_vpn, ref) \
@@ -150,7 +150,7 @@
     csrwr t1, csr_tlbehi; \
     tlbsrch; \
     csrrd t2, csr_tlbidx; \
-	srli.w t2, t2, 31; \
+    srli.w t2, t2, 31; \
     li.w    t1, 0x1; \
     bne   t2, t1, inst_error
 
@@ -164,7 +164,7 @@
     csrwr t1, csr_tlbehi; \
     tlbsrch; \
     csrrd t2, csr_tlbidx; \
-	srli.w t2, t2, 31; \
+    srli.w t2, t2, 31; \
     li.w    t1, 0x1; \
     bne   t2, t1, inst_error
 

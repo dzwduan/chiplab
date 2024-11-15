@@ -1,6 +1,6 @@
 `include "mycpu.vh"
 `include "csr.vh"
-`default_nettype none
+
 module mycpu_top (
     input  wire        clk,
     input  wire        resetn,
