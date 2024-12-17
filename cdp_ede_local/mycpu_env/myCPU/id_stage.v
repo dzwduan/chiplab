@@ -203,11 +203,13 @@ module id_stage (
   wire                        rf2_ws_need_stall;
   wire                        es_csr_re;
   wire                        ms_csr_re;
+  wire                        br_stall;
+  wire                        br_type;
 
 
-  assign ds_ready_go = ~(rf1_forward_stall || rf2_forward_stall) ||  ms_csr_re || es_csr_re ;
+  assign ds_ready_go = ~(rf1_forward_stall || rf2_forward_stall) || ms_csr_re || es_csr_re;
   assign ds_allowin = !ds_valid || es_allowin && ds_ready_go;
-  assign ds_to_es_valid = ds_valid && ds_ready_go ;
+  assign ds_to_es_valid = ds_valid && ds_ready_go;
   assign flush_sign = excp_flush | ertn_flush | refetch_flush;
 
   always @(posedge clk) begin
@@ -440,10 +442,7 @@ module id_stage (
                        inst_csrwr   |
                        inst_csrxchg ;
 
-
-  //TODO: dont care pcaddi
   assign need_ui5 = inst_slli_w | inst_srli_w | inst_srai_w;
-
   assign need_si12     =  inst_addi_w     |
                         inst_ld_b       |
                         inst_ld_h       |
@@ -457,7 +456,6 @@ module id_stage (
                         inst_sltui      ;
 
   assign need_ui12 = inst_andi | inst_ori | inst_xori;
-
   assign need_si16_pc  =  inst_jirl |
                         inst_beq  |
                         inst_bne  |
@@ -467,9 +465,7 @@ module id_stage (
                         inst_bgeu;
 
   assign need_si20 = inst_lu12i_w | inst_pcaddu12i;
-
   assign need_si26_pc = inst_b | inst_bl;
-
   assign ds_imm = ({32{need_ui5    }} & {27'b0, rk}               ) |
                   ({32{need_si12   }} & {{20{i12[11]}}, i12}      ) |
                   ({32{need_ui12   }} & {20'b0, i12}              ) |
@@ -492,7 +488,6 @@ module id_stage (
 
 
   assign src1_is_pc = inst_jirl | inst_bl | inst_pcaddu12i;
-
   assign src2_is_imm = inst_slli_w     |
                        inst_srli_w     |
                        inst_srai_w     |
@@ -518,7 +513,6 @@ module id_stage (
   assign mem_b_size = inst_ld_b | inst_ld_bu | inst_st_b;
   assign mem_h_size = inst_ld_h | inst_ld_hu | inst_st_h;
   assign mem_sign_exted = inst_ld_b | inst_ld_h;
-
   assign mem_size = {mem_h_size, mem_b_size};
 
   assign res_from_mem = inst_ld_w;
@@ -591,18 +585,14 @@ module id_stage (
                        inst_rdcntvl_w  |
                        inst_ertn       ;
 
-  assign kernel_inst = inst_csrrd | inst_csrwr | inst_csrxchg | inst_ertn;
-  assign excp_ipe = (csr_plv == 2'b11) && kernel_inst;  // 仅有PLV0 核心态，PLV3用户态
 
-
+  assign src2_is_4 = inst_jirl | inst_bl;
   assign dst_is_rj = inst_rdcntid_w;
   assign dest = dst_is_r1 ? 5'd1 : dst_is_rj ? rj : rd;
-
   assign rf_raddr1 = rj;
   assign rf_raddr2 = src_reg_is_rd ? rd : rk;
 
-  assign {
-      rf_we,  //37:37
+  assign {rf_we,  //37:37
       rf_waddr,  //36:32
       rf_wdata  //31:0
       } = ws_to_rf_bus;
@@ -623,6 +613,24 @@ module id_stage (
   assign rj_lt_rd_sign = (rj_value[31] && ~rkd_value[31]) ? 1'b1 :
                          (~rj_value[31] && rkd_value[31]) ? 1'b0 : rj_lt_rd_unsign;
 
+  assign kernel_inst = inst_csrrd | inst_csrwr | inst_csrxchg | inst_ertn;
+  assign excp_ipe = (csr_plv == 2'b11) && kernel_inst;  // 仅有PLV0 核心态，PLV3用户态
+  assign {rdcnt_en, rdcnt_result} = ({33{inst_rdcntvh_w}} & {1'b1, timer_64[63:32]}) |
+                                    ({33{inst_rdcntvl_w}} & {1'b1, timer_64[31:0]}) |
+                                    ({33{inst_rdcntid_w}} & {1'b1, csr_tid}) ;
+  assign excp_ine = ~inst_valid;
+  assign csr_data = rdcnt_en ? rdcnt_result : rd_csr_data;
+  assign csr_idx = ds_inst[23:10];
+  assign res_from_csr = inst_csrrd | inst_csrwr | inst_csrxchg | inst_rdcntid_w | inst_rdcntvh_w | inst_rdcntvl_w;
+  assign csr_we = inst_csrwr | inst_csrxchg;
+  assign csr_mask = inst_csrxchg;  // csr need mask
+  assign excp     = excp_ipe | inst_syscall | inst_break | ds_excp | excp_ine | has_int; // 是否是异常指令
+  assign excp_num = {
+    excp_ipe, excp_ine, inst_break, inst_syscall, ds_excp_num, has_int
+  };  //异常指令列表onehot
+  assign rd_csr_addr = csr_idx;
+
+
   assign br_taken = (  inst_beq  &&  rj_eq_rd
                     || inst_bne  && !rj_eq_rd
                     || inst_blt  &&  rj_lt_rd_sign
@@ -634,30 +642,13 @@ module id_stage (
                     || inst_b
                   ) && ds_valid;
 
-  assign src2_is_4 = inst_jirl | inst_bl;
-
+  // 仅考虑需要计算的跳转指令
+  assign br_type = inst_beq | inst_bne | inst_blt | inst_bge | inst_bltu | inst_bgeu;
+  assign br_stall = br_type & (rf1_forward_stall || rf2_forward_stall);
   assign br_target = ({32{inst_beq || inst_bne || inst_bl || inst_b ||
                           inst_blt || inst_bge || inst_bltu || inst_bgeu}} & (ds_pc + ds_imm   )) |
                      ({32{inst_jirl}}                                      & (rj_value + ds_imm)) ;
-
-  assign {rdcnt_en, rdcnt_result} = ({33{inst_rdcntvh_w}} & {1'b1, timer_64[63:32]}) |
-                                    ({33{inst_rdcntvl_w}} & {1'b1, timer_64[31:0]}) |
-                                    ({33{inst_rdcntid_w}} & {1'b1, csr_tid}) ;
-
-  assign excp_ine = ~inst_valid;
-  assign csr_data = rdcnt_en ? rdcnt_result : rd_csr_data;
-  assign csr_idx = ds_inst[23:10];
-  assign res_from_csr = inst_csrrd | inst_csrwr | inst_csrxchg | inst_rdcntid_w | inst_rdcntvh_w | inst_rdcntvl_w;
-  assign csr_we = inst_csrwr | inst_csrxchg;
-  assign csr_mask = inst_csrxchg;  // csr need mask
-
-  assign excp     = excp_ipe | inst_syscall | inst_break | ds_excp | excp_ine | has_int; // 是否是异常指令
-  assign excp_num = {
-    excp_ipe, excp_ine, inst_break, inst_syscall, ds_excp_num, has_int
-  };  //异常指令列表onehot
-  assign rd_csr_addr = csr_idx;
-
-  assign br_bus = {br_taken, br_target};
+  assign br_bus = {br_stall, br_taken, br_target};
 
   assign ds_to_es_bus = {
     excp_num,  // 210:210

@@ -182,7 +182,6 @@ module mycpu_top (
       .result    (mul_result)
   );
 
-
   exe_stage u_exe_stage (
       .clk                 (clk),
       .reset               (reset),
