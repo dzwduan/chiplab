@@ -22,10 +22,13 @@ module mem_stage (
     input  wire [                 63:0] mul_result,
     //to exe
     output wire                         ms_flush,
+    output wire                         ms_data_ok,
     //excp
     input  wire                         excp_flush,
     input  wire                         ertn_flush,
-    input  wire                         refetch_flush
+    input  wire                         refetch_flush,
+    //data sram interface
+    input  wire                         data_sram_data_ok
 );
 
   reg                           ms_valid;
@@ -60,8 +63,10 @@ module mem_stage (
   wire [                   6:0] excp_num;
   wire                          ms_csr_re;
   wire [                  31:0] error_va;
+  wire                          ms_store_op;
+  wire                          ms_data_cancel;
 
-  assign ms_ready_go = 1'b1;
+  assign ms_ready_go = (ms_valid & (ms_store_op | ms_load_op)) ? data_sram_data_ok : 1'b1;
   assign ms_allowin = ~ms_valid || ms_ready_go && ws_allowin;
   assign ms_to_ws_valid = ms_valid && ms_ready_go;
   assign flush_sign = excp_flush | ertn_flush | refetch_flush;
@@ -78,7 +83,7 @@ module mem_stage (
     end
   end
 
-  assign {
+  assign {ms_data_cancel, ms_store_op,  //
       error_va, ms_csr_re, ms_mem_sign_exted,  //133
       ms_excp_num,  //132:126
       ms_csr_we,  //125:125
@@ -92,7 +97,7 @@ module mem_stage (
       ms_gr_we,  //69:69
       ms_dest,  //68:64
       ms_exe_result,  //63:32
-      ms_pc  //31:0c
+      ms_pc  //31:0
       } = es_to_ms_bus_r;
 
   assign excp = ms_excp;
@@ -113,16 +118,17 @@ module mem_stage (
     ms_pc
   };
 
+
   // forward path
   assign dest_zero = (ms_dest == 5'b0);
-  assign forward_enable = ms_valid & ms_gr_we & !dest_zero;
+  assign forward_enable = ms_to_ws_valid & ms_gr_we & !dest_zero;  //需要等待data_ok
   assign dep_need_stall = 1'b0;
   assign ms_to_ds_forward_bus = {
     ms_csr_re & ms_valid, dep_need_stall, forward_enable, ms_dest, ms_final_result
   };
   assign ms_to_ds_valid = ms_valid;
 
-  assign ms_flush = (excp | ms_inst_ertn | ms_csr_we ) & ms_valid  ;
+  assign ms_flush = (excp | ms_inst_ertn | ms_csr_we) & ms_valid;
 
 
   assign ms_rdata = data_sram_rdata;
@@ -142,10 +148,12 @@ module mem_stage (
                     ({32{!ms_mem_size}}                         &   ms_rdata  );
 
   assign ms_final_result =({32{ms_load_op      }} & mem_result       )  |
-                         ({32{ms_mul_div_op[0]}} & mul_result[31:0] )  |
-                         ({32{ms_mul_div_op[1]}} & mul_result[63:32])  |
-                         ({32{ms_mul_div_op[2]}} & div_result       )  |
-                         ({32{ms_mul_div_op[3]}} & mod_result       )  |
-                         ({32{!ms_mul_div_op && !ms_load_op}} & ms_exe_result);
+                         ({32{ms_mul_div_op[0]}}  & mul_result[31:0] )  |
+                         ({32{ms_mul_div_op[1]}}  & mul_result[63:32])  |
+                         ({32{ms_mul_div_op[2]}}  & div_result       )  |
+                         ({32{ms_mul_div_op[3]}}  & mod_result       )  |
+                         ({32{!ms_mul_div_op      & !ms_load_op}} & ms_exe_result);
+
+  assign ms_data_ok = data_sram_data_ok;
 
 endmodule

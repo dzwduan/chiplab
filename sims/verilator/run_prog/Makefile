@@ -8,7 +8,7 @@ else ifeq ($(VERILATOR_HOME2), $(wildcard $(VERILATOR_HOME2)))
 VERILATOR_HOME=$(VERILATOR_HOME2)
 else
 #add your verilator include path to this var, then delete this line.
-VERILATOR_HOME=/home/yangzhaoxin/opt/verilator/share/verilator
+# VERILATOR_HOME=/home/dzw/verilator
 #$(error Please install verilator or config the installed path here.)
 endif
 
@@ -95,7 +95,7 @@ VERILATOR_SRC += ${UART_SRC}/*.v
 VERILATOR_INCLUDE += -y ${NAND_SRC}
 VERILATOR_SRC += ${NAND_SRC}/*.v
 
-CFLAGS += -std=c++11
+CFLAGS += -std=c++17
 CFLAGS += -DWAVEFORM_SLICE_SIZE=${WAVEFORM_SLICE_SIZE}
 CFLAGS += -DTRACE_SLICE_SIZE=${TRACE_SLICE_SIZE}
 CFLAGS += -DWAVEFORM_TAIL_SIZE=${WAVEFORM_TAIL_SIZE}

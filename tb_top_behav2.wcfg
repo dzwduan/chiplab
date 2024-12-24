@@ -11,26 +11,127 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="1362298007fs"></ZoomStartTime>
-      <ZoomEndTime time="1362382608fs"></ZoomEndTime>
-      <Cursor1Time time="1362334807fs"></Cursor1Time>
+      <ZoomStartTime time="1615790334fs"></ZoomStartTime>
+      <ZoomEndTime time="1616957335fs"></ZoomEndTime>
+      <Cursor1Time time="1616497000fs"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
-      <NameColumnWidth column_width="196"></NameColumnWidth>
-      <ValueColumnWidth column_width="66"></ValueColumnWidth>
+      <NameColumnWidth column_width="178"></NameColumnWidth>
+      <ValueColumnWidth column_width="80"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="26" />
+   <WVObjectSize size="49" />
+   <wave_markers>
+      <marker label="" time="3105000" />
+   </wave_markers>
+   <wvobject type="logic" fp_name="/tb_top/clk">
+      <obj_property name="ElementShortName">clk</obj_property>
+      <obj_property name="ObjectShortName">clk</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_if_stage/fs_ready_go">
+      <obj_property name="ElementShortName">fs_ready_go</obj_property>
+      <obj_property name="ObjectShortName">fs_ready_go</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_if_stage/ds_allowin">
+      <obj_property name="ElementShortName">ds_allowin</obj_property>
+      <obj_property name="ObjectShortName">ds_allowin</obj_property>
+   </wvobject>
    <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_if_stage/fs_valid">
       <obj_property name="ElementShortName">fs_valid</obj_property>
       <obj_property name="ObjectShortName">fs_valid</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_if_stage/fs_allowin">
+      <obj_property name="ElementShortName">fs_allowin</obj_property>
+      <obj_property name="ObjectShortName">fs_allowin</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_if_stage/fs_to_ds_valid">
+      <obj_property name="ElementShortName">fs_to_ds_valid</obj_property>
+      <obj_property name="ObjectShortName">fs_to_ds_valid</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_if_stage/pfs_ready_go">
+      <obj_property name="ElementShortName">pfs_ready_go</obj_property>
+      <obj_property name="ObjectShortName">pfs_ready_go</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_if_stage/to_fs_valid">
+      <obj_property name="ElementShortName">to_fs_valid</obj_property>
+      <obj_property name="ObjectShortName">to_fs_valid</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_if_stage/fs_to_ds_valid">
+      <obj_property name="ElementShortName">fs_to_ds_valid</obj_property>
+      <obj_property name="ObjectShortName">fs_to_ds_valid</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_if_stage/fs_br_taken">
+      <obj_property name="ElementShortName">fs_br_taken</obj_property>
+      <obj_property name="ObjectShortName">fs_br_taken</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_id_stage/ds_valid">
+      <obj_property name="ElementShortName">ds_valid</obj_property>
+      <obj_property name="ObjectShortName">ds_valid</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_top/soc_lite/cpu/u_if_stage/br_target">
+      <obj_property name="ElementShortName">br_target[31:0]</obj_property>
+      <obj_property name="ObjectShortName">br_target[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_top/soc_lite/cpu/u_if_stage/fs_br_target">
+      <obj_property name="ElementShortName">fs_br_target[31:0]</obj_property>
+      <obj_property name="ObjectShortName">fs_br_target[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_top/soc_lite/cpu/u_if_stage/nextpc">
+      <obj_property name="ElementShortName">nextpc[31:0]</obj_property>
+      <obj_property name="ObjectShortName">nextpc[31:0]</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/tb_top/soc_lite/cpu/u_if_stage/fs_pc">
       <obj_property name="ElementShortName">fs_pc[31:0]</obj_property>
       <obj_property name="ObjectShortName">fs_pc[31:0]</obj_property>
    </wvobject>
+   <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_if_stage/inst_sram_req">
+      <obj_property name="ElementShortName">inst_sram_req</obj_property>
+      <obj_property name="ObjectShortName">inst_sram_req</obj_property>
+      <obj_property name="CustomSignalColor">#FFD700</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_if_stage/inst_sram_addr_ok">
+      <obj_property name="ElementShortName">inst_sram_addr_ok</obj_property>
+      <obj_property name="ObjectShortName">inst_sram_addr_ok</obj_property>
+      <obj_property name="CustomSignalColor">#FAAFBE</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_top/soc_lite/cpu/u_if_stage/inst_sram_addr">
+      <obj_property name="ElementShortName">inst_sram_addr[31:0]</obj_property>
+      <obj_property name="ObjectShortName">inst_sram_addr[31:0]</obj_property>
+      <obj_property name="CustomSignalColor">#FFD700</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_top/soc_lite/cpu/u_if_stage/inst_sram_rdata">
+      <obj_property name="ElementShortName">inst_sram_rdata[31:0]</obj_property>
+      <obj_property name="ObjectShortName">inst_sram_rdata[31:0]</obj_property>
+      <obj_property name="CustomSignalColor">#FAAFBE</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_if_stage/inst_sram_data_ok">
+      <obj_property name="ElementShortName">inst_sram_data_ok</obj_property>
+      <obj_property name="ObjectShortName">inst_sram_data_ok</obj_property>
+      <obj_property name="CustomSignalColor">#FAAFBE</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
    <wvobject fp_name="divider384" type="divider">
       <obj_property name="label">IF -&gt; ID</obj_property>
       <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_id_stage/ds_allowin">
+      <obj_property name="ElementShortName">ds_allowin</obj_property>
+      <obj_property name="ObjectShortName">ds_allowin</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_id_stage/ds_valid">
+      <obj_property name="ElementShortName">ds_valid</obj_property>
+      <obj_property name="ObjectShortName">ds_valid</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_id_stage/ds_ready_go">
+      <obj_property name="ElementShortName">ds_ready_go</obj_property>
+      <obj_property name="ObjectShortName">ds_ready_go</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_exe_stage/ds_to_es_valid">
+      <obj_property name="ElementShortName">ds_to_es_valid</obj_property>
+      <obj_property name="ObjectShortName">ds_to_es_valid</obj_property>
    </wvobject>
    <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_id_stage/ds_valid">
       <obj_property name="ElementShortName">ds_valid</obj_property>
@@ -39,18 +140,6 @@
    <wvobject type="array" fp_name="/tb_top/soc_lite/cpu/u_id_stage/ds_pc">
       <obj_property name="ElementShortName">ds_pc[31:0]</obj_property>
       <obj_property name="ObjectShortName">ds_pc[31:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/tb_top/soc_lite/cpu/u_id_stage/rd_csr_addr">
-      <obj_property name="ElementShortName">rd_csr_addr[13:0]</obj_property>
-      <obj_property name="ObjectShortName">rd_csr_addr[13:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/tb_top/soc_lite/cpu/u_id_stage/rd_csr_data">
-      <obj_property name="ElementShortName">rd_csr_data[31:0]</obj_property>
-      <obj_property name="ObjectShortName">rd_csr_data[31:0]</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_id_stage/ms_csr_stall">
-      <obj_property name="ElementShortName">ms_csr_stall</obj_property>
-      <obj_property name="ObjectShortName">ms_csr_stall</obj_property>
    </wvobject>
    <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_id_stage/ds_ready_go">
       <obj_property name="ElementShortName">ds_ready_go</obj_property>
@@ -64,9 +153,21 @@
       <obj_property name="ElementShortName">es_valid</obj_property>
       <obj_property name="ObjectShortName">es_valid</obj_property>
    </wvobject>
+   <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_exe_stage/es_ready_go">
+      <obj_property name="ElementShortName">es_ready_go</obj_property>
+      <obj_property name="ObjectShortName">es_ready_go</obj_property>
+   </wvobject>
    <wvobject type="array" fp_name="/tb_top/soc_lite/cpu/u_exe_stage/es_pc">
       <obj_property name="ElementShortName">es_pc[31:0]</obj_property>
       <obj_property name="ObjectShortName">es_pc[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_exe_stage/data_sram_req">
+      <obj_property name="ElementShortName">data_sram_req</obj_property>
+      <obj_property name="ObjectShortName">data_sram_req</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_exe_stage/ms_data_ok">
+      <obj_property name="ElementShortName">ms_data_ok</obj_property>
+      <obj_property name="ObjectShortName">ms_data_ok</obj_property>
    </wvobject>
    <wvobject fp_name="divider386" type="divider">
       <obj_property name="label">EX -&gt; MEM</obj_property>
@@ -75,6 +176,10 @@
    <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_mem_stage/ms_valid">
       <obj_property name="ElementShortName">ms_valid</obj_property>
       <obj_property name="ObjectShortName">ms_valid</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_top/soc_lite/cpu/u_mem_stage/ms_allowin">
+      <obj_property name="ElementShortName">ms_allowin</obj_property>
+      <obj_property name="ObjectShortName">ms_allowin</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/tb_top/soc_lite/cpu/u_mem_stage/ms_pc">
       <obj_property name="ElementShortName">ms_pc[31:0]</obj_property>
@@ -115,6 +220,8 @@
    <wvobject type="array" fp_name="/tb_top/ref_wb_pc">
       <obj_property name="ElementShortName">ref_wb_pc[31:0]</obj_property>
       <obj_property name="ObjectShortName">ref_wb_pc[31:0]</obj_property>
+      <obj_property name="CustomSignalColor">#FAAFBE</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/tb_top/soc_lite/cpu/u_wb_stage/debug_wb_rf_wdata">
       <obj_property name="ElementShortName">debug_wb_rf_wdata[31:0]</obj_property>
@@ -123,5 +230,7 @@
    <wvobject type="array" fp_name="/tb_top/ref_wb_rf_wdata">
       <obj_property name="ElementShortName">ref_wb_rf_wdata[31:0]</obj_property>
       <obj_property name="ObjectShortName">ref_wb_rf_wdata[31:0]</obj_property>
+      <obj_property name="CustomSignalColor">#FAAFBE</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
    </wvobject>
 </wave_config>

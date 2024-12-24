@@ -7,6 +7,7 @@ module if_stage (
     input  wire                        ds_allowin,
     output wire                        fs_to_ds_valid,
     output wire [`FS_TO_DS_BUS_WD-1:0] fs_to_ds_bus,
+    output wire                        br_taken_r,
     // brbus
     input  wire [      `BR_BUS_WD-1:0] br_bus,
     // exception
@@ -44,8 +45,10 @@ module if_stage (
   reg         fs_excp;
   reg         fs_excp_num;
   reg  [31:0] fs_inst_buf;
-  reg         fs_buf_en;
+  reg         fs_inst_buf_en;
   reg         fs_inst_cancel;
+  reg  [31:0] fs_br_target;
+  reg         fs_br_taken;
 
   wire [31:0] br_target;
   wire        br_taken;
@@ -75,14 +78,24 @@ module if_stage (
   assign nextpc = excp_flush                ?
                   excp_entry  : (ertn_flush | refetch_flush)?
                   flush_pc    : br_taken    ?
-                  br_target   : seq_pc;
+                  br_target   : fs_br_taken ? fs_br_target : seq_pc      ;
 
-  assign inst_sram_req = ~reset & fs_allowin & ~br_stall; // 解决pfs_ready_go==1 & fs_allowin==0的情况, 不再添加pfs_inst_buf
+  assign inst_sram_req = ~reset & fs_allowin & ~br_stall;
   assign inst_sram_wr = 1'b0;
   assign inst_sram_size = 2'b10;
   assign inst_sram_addr = nextpc;
   assign inst_sram_wstrb = 4'b0000;
   assign inst_sram_wdata = 32'h0;
+
+  always @(posedge clk) begin
+    if (reset || (pfs_ready_go & fs_allowin)) begin
+      fs_br_taken <= 1'b0;
+      // fs_br_target <= 32'b0;
+    end else if (br_taken) begin
+      fs_br_taken  <= br_taken;
+      fs_br_target <= br_target;
+    end
+  end
 
 
   //=========================== pre-IF to IF pipeline ===========================
@@ -105,10 +118,10 @@ module if_stage (
   // exception cancel
   // 1. to_fs_valid
   // 2. fs_allowin & !fs_ready_go
-  always@(posedge clk) begin
+  always @(posedge clk) begin
     if (reset) begin
       fs_inst_cancel <= 1'b0;
-    end else if ((to_fs_valid || (fs_allowin & !fs_ready_go)) & flush_sign) begin
+    end else if ((to_fs_valid || (fs_allowin & !fs_ready_go)) || flush_sign) begin
       fs_inst_cancel <= 1'b1;
     end else if (inst_sram_data_ok) begin
       fs_inst_cancel <= 1'b0;
@@ -118,22 +131,23 @@ module if_stage (
 
   //========================== IF stage =========================================
   // 仅当该次请求的数据response ok, 才说明fs准备好发给ds
-  assign fs_ready_go = inst_sram_data_ok & ~fs_inst_cancel;
+  assign fs_ready_go = inst_sram_data_ok | fs_inst_buf_en;
   assign fs_allowin = !fs_valid || fs_ready_go && ds_allowin || flush_sign;
   assign fs_to_ds_valid = fs_valid && fs_ready_go;
 
   //=========================== IF to ID pipeline =================================
   assign excp = fs_excp;
   assign excp_num = fs_excp_num;
-  assign fs_inst = fs_buf_en ? fs_inst_buf : inst_sram_rdata;
+  assign fs_inst = fs_inst_buf_en ? fs_inst_buf : inst_sram_rdata;
   assign fs_to_ds_bus = {excp, excp_num, fs_pc, fs_inst};
 
   //when if ready_go & !id_allowin, add fs_inst_buf
   always @(posedge clk) begin
     if (reset | flush_sign | fs_inst_cancel) begin
-      fs_buf_en <= 1'b0;
+      fs_inst_buf_en <= 1'b0;
+      fs_inst_buf <= 32'h0;
     end else if (fs_ready_go & !ds_allowin) begin
-      fs_buf_en   <= 1'b1;
+      fs_inst_buf_en <= 1'b1;
       fs_inst_buf <= fs_inst;
     end
   end
@@ -141,6 +155,6 @@ module if_stage (
 
   //=========================== ID to pre-IF ============================================
   assign {br_stall, br_taken, br_target} = br_bus;
-
+  assign  br_taken_r = fs_br_taken;
 
 endmodule

@@ -27,14 +27,15 @@ module exe_stage (
     input  wire                         refetch_flush,
     // from mem
     input  wire                         ms_flush,
+    input  wire                         ms_data_ok,
     // data sram interface
-    output wire         data_sram_req,
-    output wire         data_sram_wr,
-    output wire [ 1:0]  data_sram_size,
-    output wire [ 3:0]  data_sram_wstrb,
-    output wire [31:0]  data_sram_addr,
-    output wire [31:0]  data_sram_wdata,
-    input  wire         data_sram_addr_ok
+    output wire                         data_sram_req,
+    output wire                         data_sram_wr,
+    output wire [                  1:0] data_sram_size,
+    output wire [                  3:0] data_sram_wstrb,
+    output wire [                 31:0] data_sram_addr,
+    output wire [                 31:0] data_sram_wdata,
+    input  wire                         data_sram_addr_ok
 );
 
 
@@ -82,6 +83,11 @@ module exe_stage (
   wire                         access_mem;
   wire                         es_csr_re;
   wire [                 31:0] error_va;
+  reg                          es_data_cancel;
+
+  wire [3:0] wr_byte_en;
+  wire [2:0] data_size;
+
 
   assign {
       es_excp_num,
@@ -112,6 +118,8 @@ module exe_stage (
 
 
   assign es_to_ms_bus = {
+    es_data_cancel,
+    es_store_op,
     error_va,
     es_csr_re,
     es_mem_sign_exted,  //136
@@ -132,7 +140,7 @@ module exe_stage (
 
 
 
-  assign es_ready_go = !div_stall & !ms_flush;  // 没算完div，stall
+  assign es_ready_go = !div_stall & !ms_flush & ((es_load_op | es_store_op) ? (data_sram_req & data_sram_addr_ok) : 1'b1);  // 没算完div，stall
   assign es_allowin = !es_valid || (es_ready_go && ms_allowin);
   assign es_to_ms_valid = es_valid && es_ready_go;
   assign flush_sign = excp_flush | ertn_flush | refetch_flush;
@@ -140,7 +148,7 @@ module exe_stage (
   always @(posedge clk) begin
     if (reset | flush_sign) begin
       es_valid <= 1'b0;
-    end else if (ms_allowin) begin 
+    end else if (ms_allowin) begin
       es_valid <= ds_to_es_valid;
     end
 
@@ -176,7 +184,7 @@ module exe_stage (
   assign es_csr_re = es_res_from_csr & es_valid;
   assign dest_zero = (es_dest == 5'b0);
   assign forward_enable = es_valid & es_gr_we & !dest_zero;
-  assign dep_need_stall = es_load_op | es_div_enable | es_mul_enable;
+  assign dep_need_stall = es_store_op | es_load_op | es_div_enable | es_mul_enable;
   assign es_to_ds_forward_bus = {es_csr_re, dep_need_stall, forward_enable, es_dest, es_result};
   assign es_to_ds_valid = es_valid;
 
@@ -220,18 +228,46 @@ module exe_stage (
 
 
   wire [31:0] es_sth_cont = {
-    {16{es_sth_wen[3]}} & es_rkd_value[15:0], {16{es_sth_wen[0]}} & es_rkd_value[15:0]
+    {16{es_sth_wen[3]}} & es_rkd_value[15:0], 
+    {16{es_sth_wen[0]}} & es_rkd_value[15:0]
   };
 
-  assign data_sram_en = (es_store_op || es_load_op) & es_valid & !ms_flush & !flush_sign;
-  assign data_sram_we = (!ms_flush & !excp_ale & !excp_flush) ? ({4{es_store_op & es_valid}} & (es_mem_size[0] ?
+assign {wr_byte_en, data_size}  = ({7{es_mem_size[0]}} & {es_stb_wen, 3'b00}) |
+                                  ({7{es_mem_size[1]}} & {es_sth_wen, 3'b01}) |
+                                  ({7{!es_mem_size  }} & {4'b1111   , 3'b10}) ;
+
+//assign data_wdata = es_rkd_value; 
+
+
+  assign data_sram_req = (es_store_op || es_load_op) & es_valid & !ms_flush & !flush_sign & ms_allowin;
+  assign data_sram_wstrb = (!ms_flush & !excp_ale & !excp_flush) ?
+                                            ({4{es_store_op & es_valid}} & (es_mem_size[0] ?
                                             es_stb_wen : es_mem_size[1] ?
                                             es_sth_wen : !es_mem_size   ?
                                             4'b1111 : 4'b0000)) :
                                             4'b0000;
+  assign data_sram_wr = |data_sram_wstrb;
+  assign data_sram_size = {2{es_mem_size[0]}} & 2'b00 |
+                          {2{es_mem_size[1]}} & 2'b01 |
+                          {2{!es_mem_size}}   & 2'b10;
   assign data_sram_addr = {es_alu_result[31:2], 2'b0};
   assign data_sram_wdata = ({32{es_mem_size[0]}} & es_stb_cont) |
                            ({32{es_mem_size[1]}} & es_sth_cont) |
                            ({32{!es_mem_size}}   & es_rkd_value);
+
+
+  // exception cancel
+  // 1. to_ms_valid
+  // 2. ms_allowin & !es_ready_go
+
+  always @(posedge clk) begin
+    if (reset) begin
+      es_data_cancel <= 1'b0;
+    end else if ((es_to_ms_valid || (ms_allowin & !es_ready_go)) & flush_sign) begin
+      es_data_cancel <= 1'b1;
+    end else if (ms_data_ok) begin
+      es_data_cancel <= 1'b0;
+    end
+  end
 
 endmodule

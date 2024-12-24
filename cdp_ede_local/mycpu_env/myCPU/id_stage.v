@@ -10,6 +10,7 @@ module id_stage (
     //from fsF
     input  wire                         fs_to_ds_valid,
     input  wire [`FS_TO_DS_BUS_WD -1:0] fs_to_ds_bus,
+    input  wire br_taken_r,
     //to es
     output wire                         ds_to_es_valid,
     output wire [`DS_TO_ES_BUS_WD -1:0] ds_to_es_bus,
@@ -207,6 +208,8 @@ module id_stage (
   wire                        br_type;
 
 
+
+
   assign ds_ready_go = ~(rf1_forward_stall || rf2_forward_stall) || ms_csr_re || es_csr_re;
   assign ds_allowin = !ds_valid || es_allowin && ds_ready_go;
   assign ds_to_es_valid = ds_valid && ds_ready_go;
@@ -215,10 +218,15 @@ module id_stage (
   always @(posedge clk) begin
     if (reset || br_taken || flush_sign) begin
       ds_valid <= 1'b0;
-    end else if (ds_allowin) begin
-      ds_valid <= fs_to_ds_valid;
+    end else begin
+      if (ds_allowin) begin
+        if (br_taken_r) begin
+          ds_valid <= 1'b0;
+        end else begin
+          ds_valid <= fs_to_ds_valid;
+        end
+      end
     end
-
     if (fs_to_ds_valid && ds_allowin) begin
       fs_to_ds_bus_r <= fs_to_ds_bus;
     end

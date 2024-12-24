@@ -167,7 +167,7 @@ module confreg
             endcase
         end
     end
-
+wire conf_we;
     //conf write, only support a word write
     assign conf_we = conf_req & conf_wr & conf_addr_ok;
 

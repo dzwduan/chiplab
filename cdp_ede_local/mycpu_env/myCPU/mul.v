@@ -152,7 +152,7 @@ BoothInterBase las(.y({CalY[32], CalY[32], CalY[31]}), .InX(CalX<<32), .OutX(Boo
 reg [16:0] SecStageCarry;
 reg [63:0] SecStageBoothRes [16:0];
 integer p;
- 
+
 always @(posedge mul_clk) begin
     if (~reset) begin
         SecStageCarry <= Carry;

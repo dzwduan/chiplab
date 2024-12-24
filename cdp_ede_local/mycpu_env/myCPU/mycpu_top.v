@@ -4,26 +4,52 @@
 module mycpu_top (
     input  wire        clk,
     input  wire        resetn,
-    // inst sram interface
-    output wire        inst_sram_req,
-    output wire        inst_sram_wr,
-    output wire [ 1:0] inst_sram_size,
-    output wire [ 3:0] inst_sram_wstrb,
-    output wire [31:0] inst_sram_addr,
-    output wire [31:0] inst_sram_wdata,
-    input  wire        inst_sram_addr_ok,
-    input  wire        inst_sram_data_ok,
-    input  wire [31:0] inst_sram_rdata,
-    // data sram interface
-    output wire        data_sram_req,
-    output wire        data_sram_wr,
-    output wire [ 1:0] data_sram_size,
-    output wire [ 3:0] data_sram_wstrb,
-    output wire [31:0] data_sram_addr,
-    output wire [31:0] data_sram_wdata,
-    input  wire        data_sram_addr_ok,
-    input  wire        data_sram_data_ok,
-    input  wire [31:0] data_sram_rdata,
+    // ar 
+    output      [ 3:0] arid,     // master -> slave
+    output      [31:0] araddr,   // master -> slave
+    output      [ 7:0] arlen,    // master -> slave, 8'b0
+    output      [ 2:0] arsize,   // master -> slave
+    output      [ 1:0] arburst,  // master -> slave, 2'b1
+    output      [ 1:0] arlock,   // master -> slave, 2'b0
+    output      [ 3:0] arcache,  // master -> slave, 4'b0
+    output      [ 2:0] arprot,   // master -> slave, 3'b0
+    output             arvalid,  // master -> slave
+    input              arready,  // slave  -> master
+
+    // r
+    input  [ 3:0] rid,     // slave  -> master
+    input  [31:0] rdata,   // slave  -> master
+    input  [ 1:0] rresp,   // slave  -> master, ignore
+    input         rlast,   // slave  -> master, ignore
+    input         rvalid,  // slave  -> master
+    output        rready,  // master -> slave
+
+    // aw
+    output [ 3:0] awid,     // master -> slave, 4'b1
+    output [31:0] awaddr,   // master -> slave
+    output [ 7:0] awlen,    // master -> slave, 8'b0
+    output [ 2:0] awsize,   // master -> slave
+    output [ 1:0] awburst,  // master -> slave, 2'b1
+    output [ 1:0] awlock,   // master -> slave, 2'b0
+    output [ 3:0] awcache,  // master -> slave, 4'b0
+    output [ 2:0] awprot,   // master -> slave, 3'b0
+    output        awvalid,  // master -> slave
+    input         awready,  // slave  -> master
+
+    // w
+    output [ 3:0] wid,     // master -> slave, 4'b1
+    output [31:0] wdata,   // master -> slave
+    output [ 3:0] wstrb,   // master -> slave
+    output        wlast,   // master -> slave, 1'b1
+    output        wvalid,  // master -> slave
+    input         wready,  // slave  -> master
+
+    // b
+    input  [3:0] bid,     // slave  -> master, ignore
+    input  [1:0] bresp,   // slave  -> master, ignore
+    input        bvalid,  // slave  -> master
+    output       bready,  // master -> slave
+
     // trace debug interface
     output wire [31:0] debug_wb_pc,
     output wire [ 3:0] debug_wb_rf_we,
@@ -32,6 +58,29 @@ module mycpu_top (
 );
   reg reset;
   always @(posedge clk) reset <= ~resetn;
+
+
+  // inst sram interface
+  wire                         inst_sram_req;
+  wire                         inst_sram_wr;
+  wire [                  1:0] inst_sram_size;
+  wire [                  3:0] inst_sram_wstrb;
+  wire [                 31:0] inst_sram_addr;
+  wire [                 31:0] inst_sram_wdata;
+  wire [                 31:0] inst_sram_rdata;
+  wire                         inst_sram_addr_ok;
+  wire                         inst_sram_data_ok;
+
+  // data sram interface
+  wire                         data_sram_req;
+  wire                         data_sram_wr;
+  wire [                  3:0] data_sram_wstrb;
+  wire [                  1:0] data_sram_size;
+  wire [                 31:0] data_sram_addr;
+  wire [                 31:0] data_sram_wdata;
+  wire [                 31:0] data_sram_rdata;
+  wire                         data_sram_addr_ok;
+  wire                         data_sram_data_ok;
 
   wire                         ds_allowin;
   wire                         es_allowin;
@@ -94,6 +143,8 @@ module mycpu_top (
   wire                         refetch_flush;
   wire [                 31:0] csr_rvalue;
   wire [                 13:0] csr_idx;
+  wire                         ms_data_ok;
+  wire                         br_taken_r;
 
   if_stage u_if_stage (
       .clk              (clk),
@@ -102,6 +153,7 @@ module mycpu_top (
       .ds_allowin       (ds_allowin),
       .fs_to_ds_valid   (fs_to_ds_valid),
       .fs_to_ds_bus     (fs_to_ds_bus),
+      .br_taken_r       (br_taken_r),
       // brbus
       .br_bus           (br_bus),
       // exception
@@ -130,9 +182,10 @@ module mycpu_top (
       //allowin
       .es_allowin          (es_allowin),
       .ds_allowin          (ds_allowin),
-      //from fsF
+      //from fs
       .fs_to_ds_valid      (fs_to_ds_valid),
       .fs_to_ds_bus        (fs_to_ds_bus),
+      .br_taken_r          (br_taken_r),
       //to es
       .ds_to_es_valid      (ds_to_es_valid),
       .ds_to_es_bus        (ds_to_es_bus),
@@ -208,6 +261,7 @@ module mycpu_top (
       .ertn_flush          (ertn_flush),
       .refetch_flush       (refetch_flush),
       .ms_flush            (ms_flush),
+      .ms_data_ok          (ms_data_ok),
       // to data sram
       .data_sram_req       (data_sram_req),
       .data_sram_wr        (data_sram_wr),
@@ -243,7 +297,11 @@ module mycpu_top (
       .excp_flush          (excp_flush),
       .ertn_flush          (ertn_flush),
       .refetch_flush       (refetch_flush),
-      .ms_flush            (ms_flush)
+      //to es
+      .ms_flush            (ms_flush),
+      .ms_data_ok          (ms_data_ok),
+      //from sram resp
+      .data_sram_data_ok   (data_sram_data_ok)
   );
 
 
@@ -270,7 +328,7 @@ module mycpu_top (
       .csr_esubcode     (ws_csr_esubcode),
       .csr_ecode        (ws_csr_ecode),
       .csr_wr_en        (csr_wr_en),
-      .wr_csr_addr      (wr_csr_addr),
+      .wr_csr_addr      (wr_csr_addr), 
       .wr_csr_data      (wr_csr_data),
       .va_error         (ws_va_error),
       .bad_va           (ws_bad_va),

@@ -1,3 +1,4 @@
+cd "/home/dzw/chiplab/cdp_ede_local/mycpu_env/soc_verify/soc_hs_bram/run_vivado"
 create_project -force loongson ./project -part xc7a200tfbg676-1
 
 # Add conventional sources
@@ -15,6 +16,9 @@ add_files -scan_for_includes ../../../myCPU
 
 # Add constraints
 add_files -fileset constrs_1 -quiet ./constraints
-
 set_property -name "top" -value "tb_top" -objects  [get_filesets sim_1]
 set_property -name "xsim.simulate.log_all_signals" -value "1" -objects [get_filesets sim_1]
+
+# set number of threads
+set_param general.maxThreads 32
+
